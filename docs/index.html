@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Claude Traffic Light · 一眼看清 Claude Code 在干嘛</title>
-<meta name="description" content="一颗悬浮在桌面的小信号灯，实时反映 Claude Code 的运行状态。黄灯在跑、绿灯跑完、红灯等你。" />
+<title>Claude Traffic Light · Claude Code 的桌面信号灯</title>
+<meta name="description" content="桌面上的一颗小信号灯，让你不用切窗口就知道 Claude Code 现在到哪一步了。" />
 <link rel="icon" href="assets/icon.png" />
 <meta property="og:title" content="Claude Traffic Light" />
 <meta property="og:description" content="A glanceable macOS widget for Claude Code." />
@@ -80,8 +80,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 92px;
-    padding: 8px 14px;
+    width: 96px;
+    padding: 8px 0;
     border-radius: 999px;
     background: var(--fg);
     color: #0a0d12;
@@ -337,15 +337,15 @@
     <div>
       <span class="pill">
         <span class="dot"></span>
-        <span data-i18n-zh>专为 macOS 上的 Claude Code 打造</span>
+        <span data-i18n-zh>为 macOS 上的 Claude Code 而做</span>
         <span data-i18n-en>Built for Claude Code on macOS</span>
       </span>
       <h1>
-        <span data-i18n-zh>一眼看清<br/>Claude 在干嘛。</span>
+        <span data-i18n-zh>不用切窗口，<br/>也知道 Claude 在干嘛。</span>
         <span data-i18n-en>A traffic light that<br/>mirrors your agent.</span>
       </h1>
       <p class="lede">
-        <span data-i18n-zh>悬浮在桌面角落的一颗小信号灯，把 Claude Code 的状态都摆到台面上——还在跑、跑完了、还是卡住等你回话，瞄一眼就知道。</span>
+        <span data-i18n-zh>桌面角落一颗小灯，把 Claude Code 的状态摆到台面上：它在跑、它跑完了、还是停下来等你点确认——抬眼一瞄就明白，再也不用来回切窗口。</span>
         <span data-i18n-en>Claude Traffic Light is a matte-black desktop widget that watches Claude Code in real time. One glance is enough to know if it is working, finished, or waiting on you.</span>
       </p>
       <div class="actions">
@@ -354,7 +354,7 @@
           <span data-i18n-en>Download for macOS</span>
         </a>
         <a class="btn btn-ghost" href="https://github.com/TaylorSimery/claude-traffic-light">
-          <span data-i18n-zh>在 GitHub 上看代码</span>
+          <span data-i18n-zh>在 GitHub 看源码</span>
           <span data-i18n-en>View on GitHub</span>
         </a>
       </div>
@@ -380,11 +380,11 @@
   <div class="container">
     <span class="eyebrow"><span data-i18n-zh>特性</span><span data-i18n-en>Features</span></span>
     <h2>
-      <span data-i18n-zh>平时不打扰，关键时不漏看。</span>
+      <span data-i18n-zh>需要时一眼看见，<br/>不要时静悄悄。</span>
       <span data-i18n-en>Quiet on your desk.<br/>Loud when it matters.</span>
     </h2>
     <p class="section-lede">
-      <span data-i18n-zh>不占菜单栏、不占 Dock、也不弹通知。只在屏幕角落留一颗小灯，看一眼就明白。</span>
+      <span data-i18n-zh>不进菜单栏，不上 Dock，也不弹通知。屏幕角落留一颗小灯，瞄一眼就够。</span>
       <span data-i18n-en>No menu bar clutter, no Dock icon, no notifications. Just one tiny pane of glass that tells you exactly where the agent is.</span>
     </p>
     <div class="grid">
@@ -392,7 +392,7 @@
         <div class="icon">🌑</div>
         <h3><span data-i18n-zh>磨砂黑面板</span><span data-i18n-en>Matte-black panel</span></h3>
         <p>
-          <span data-i18n-zh>原生 SwiftUI 实现，磨砂质感配柔和投影，常驻所有桌面最上层。</span>
+          <span data-i18n-zh>SwiftUI 原生绘制，磨砂质感配柔和投影。常驻所有桌面最上层，不被遮挡。</span>
           <span data-i18n-en>Native SwiftUI panel with a deep matte finish and a soft drop-shadow. Floats above every Space.</span>
         </p>
       </div>
@@ -400,7 +400,7 @@
         <div class="icon">⚡</div>
         <h3><span data-i18n-zh>实时读取会话</span><span data-i18n-en>Live session reading</span></h3>
         <p>
-          <span data-i18n-zh>每秒扫一遍 <code>~/.claude/projects/**/*.jsonl</code>。不联网、不上报、不开守护进程。</span>
+          <span data-i18n-zh>每秒扫一遍 <code>~/.claude/projects/**/*.jsonl</code>。不联网、不上报、不跑守护进程。</span>
           <span data-i18n-en>Polls <code>~/.claude/projects/**/*.jsonl</code> every second. No network, no telemetry, no daemon.</span>
         </p>
       </div>
@@ -408,7 +408,7 @@
         <div class="icon">🪶</div>
         <h3><span data-i18n-zh>几乎不占资源</span><span data-i18n-en>Zero footprint</span></h3>
         <p>
-          <span data-i18n-zh>以 <code>LSUIElement</code> 后台跑，可执行文件约 250 KB。拖一下挪位置，右键退出。</span>
+          <span data-i18n-zh>以 <code>LSUIElement</code> 后台运行，可执行文件约 250 KB。拖动改位置，右键即退出。</span>
           <span data-i18n-en>Runs as an <code>LSUIElement</code> background app. ~250 KB executable. Drag to move, right-click to quit.</span>
         </p>
       </div>
@@ -416,7 +416,7 @@
         <div class="icon">🍎</div>
         <h3><span data-i18n-zh>纯 Apple 技术栈</span><span data-i18n-en>Pure Apple stack</span></h3>
         <p>
-          <span data-i18n-zh>SwiftUI + AppKit。没有 Electron、没有 Python、也没外挂脚本。Universal 二进制，本地签名直接跑。</span>
+          <span data-i18n-zh>SwiftUI + AppKit。没 Electron、没 Python、没外挂脚本。Universal 二进制，本地签名直接跑。</span>
           <span data-i18n-en>SwiftUI + AppKit. No Electron, no Python, no helper scripts. Universal binary signed for local run.</span>
         </p>
       </div>
@@ -424,15 +424,15 @@
         <div class="icon">🔒</div>
         <h3><span data-i18n-zh>数据不出本机</span><span data-i18n-en>Local only</span></h3>
         <p>
-          <span data-i18n-zh>只读你家目录下的日志文件，数据不离开这台电脑。源码精简，想审一遍也不难。</span>
+          <span data-i18n-zh>只读取本地用户目录下的日志，任何数据都不会离开这台电脑。代码简单，想自己审一遍也很快。</span>
           <span data-i18n-en>Reads files in your home directory. Nothing leaves the machine. Source is short and auditable.</span>
         </p>
       </div>
       <div class="card">
         <div class="icon">🛠</div>
-        <h3><span data-i18n-zh>想改就能改</span><span data-i18n-en>Hackable</span></h3>
+        <h3><span data-i18n-zh>想改随时改</span><span data-i18n-en>Hackable</span></h3>
         <p>
-          <span data-i18n-zh>判断逻辑就一个 Swift 文件——改规则、Xcode 重编、跑起来，三步搞定。</span>
+          <span data-i18n-zh>状态判断都在一个 Swift 文件里：改规则、Xcode 重编、跑起来，三步搞定。</span>
           <span data-i18n-en>State logic lives in a single Swift file — adjust the rules, recompile in Xcode, run.</span>
         </p>
       </div>
@@ -444,20 +444,20 @@
   <div class="container">
     <span class="eyebrow"><span data-i18n-zh>状态对照</span><span data-i18n-en>Status mapping</span></span>
     <h2>
-      <span data-i18n-zh>三盏灯，一个意思。</span>
+      <span data-i18n-zh>三种颜色，一目了然。</span>
       <span data-i18n-en>Three colors. One signal.</span>
     </h2>
     <p class="section-lede">
-      <span data-i18n-zh>读取当前会话的最新一条消息加上 CLI 进程状态，对应点亮一盏灯。</span>
+      <span data-i18n-zh>读取当前会话的最新消息，再结合 CLI 进程的状态，自动点亮对应的那一盏灯。</span>
       <span data-i18n-en>Claude Traffic Light reads the latest message in your active session and the CLI process state, then picks one light.</span>
     </p>
     <div class="states">
       <div class="state yellow">
         <div class="swatch"></div>
         <div>
-          <h4><span data-i18n-zh>黄灯 · 跑着呢</span><span data-i18n-en>Yellow — Working</span></h4>
+          <h4><span data-i18n-zh>黄灯 · 正在干活</span><span data-i18n-en>Yellow — Working</span></h4>
           <p>
-            <span data-i18n-zh>Claude 在思考、流式输出，或者正在调工具，会话日志一直在动。</span>
+            <span data-i18n-zh>Claude 正在思考、流式输出，或者在调用工具——会话日志一直在动。</span>
             <span data-i18n-en>Claude is thinking, streaming, or executing a tool. The session log is moving.</span>
           </p>
         </div>
@@ -465,9 +465,9 @@
       <div class="state green">
         <div class="swatch"></div>
         <div>
-          <h4><span data-i18n-zh>绿灯 · 跑完了</span><span data-i18n-en>Green — Done</span></h4>
+          <h4><span data-i18n-zh>绿灯 · 这轮结束了</span><span data-i18n-en>Green — Done</span></h4>
           <p>
-            <span data-i18n-zh>上一轮以 <code>end_turn</code> 干净收尾，可以回来看结果。</span>
+            <span data-i18n-zh>上一轮已经干净结束，可以回来看结果了。</span>
             <span data-i18n-en>The last turn ended cleanly with <code>end_turn</code>. Safe to come back.</span>
           </p>
         </div>
@@ -475,9 +475,9 @@
       <div class="state red">
         <div class="swatch"></div>
         <div>
-          <h4><span data-i18n-zh>红灯 · 等你了</span><span data-i18n-en>Red — Needs you</span></h4>
+          <h4><span data-i18n-zh>红灯 · 在等你</span><span data-i18n-en>Red — Needs you</span></h4>
           <p>
-            <span data-i18n-zh>工具调用在等你点确认、运行报错，或者进程已经退出。</span>
+            <span data-i18n-zh>工具调用在等你点确认，或者跑出了错，又或者进程已经退出。</span>
             <span data-i18n-en>A tool call is awaiting permission, the run errored, or the process exited.</span>
           </p>
         </div>
@@ -490,45 +490,45 @@
   <div class="container">
     <span class="eyebrow"><span data-i18n-zh>安装</span><span data-i18n-en>Install</span></span>
     <h2>
-      <span data-i18n-zh>两种装法，随你挑。</span>
+      <span data-i18n-zh>两种装法，挑一个顺手的。</span>
       <span data-i18n-en>Two ways to get it running.</span>
     </h2>
 
     <div class="install">
       <h3 style="margin:0 0 4px;">
-        <span data-i18n-zh>装好就能用</span>
+        <span data-i18n-zh>直接装现成的</span>
         <span data-i18n-en>Prebuilt app</span>
       </h3>
       <ol>
         <li>
-          <span data-i18n-zh>到 <a href="https://github.com/TaylorSimery/claude-traffic-light/releases">Releases</a> 下载 <code>ClaudeTrafficLight.zip</code>。</span>
+          <span data-i18n-zh>去 <a href="https://github.com/TaylorSimery/claude-traffic-light/releases">Releases</a> 下载 <code>ClaudeTrafficLight.zip</code>。</span>
           <span data-i18n-en>Download <code>ClaudeTrafficLight.zip</code> from <a href="https://github.com/TaylorSimery/claude-traffic-light/releases">Releases</a>.</span>
         </li>
         <li>
-          <span data-i18n-zh>把 <code>ClaudeTrafficLight.app</code> 拖进 <code>/Applications</code>。</span>
+          <span data-i18n-zh>把 <code>ClaudeTrafficLight.app</code> 拖进 <code>/Applications</code> 文件夹。</span>
           <span data-i18n-en>Move <code>ClaudeTrafficLight.app</code> to <code>/Applications</code>.</span>
         </li>
         <li>
-          <span data-i18n-zh>第一次打开：右键应用 → <strong>打开</strong>；或者跑下面的命令清掉 macOS 的隔离标记。</span>
+          <span data-i18n-zh>第一次打开：在应用上右键 → <strong>打开</strong>；或者执行下面这条命令，去掉 macOS 的隔离标记。</span>
           <span data-i18n-en>First launch: right-click the app → <strong>Open</strong>, or run the command below to drop the quarantine flag.</span>
         </li>
       </ol>
-      <pre class="code"><span class="c"># <span data-i18n-zh>清掉 ad-hoc 签名的隔离标记</span><span data-i18n-en>clear quarantine for the ad-hoc signed build</span></span>
+      <pre class="code"><span class="c"># <span data-i18n-zh>去掉 ad-hoc 签名应用的隔离标记</span><span data-i18n-en>clear quarantine for the ad-hoc signed build</span></span>
 <span class="k">xattr</span> -dr com.apple.quarantine /Applications/ClaudeTrafficLight.app</pre>
     </div>
 
     <div class="install" style="margin-top:18px;">
       <h3 style="margin:0 0 4px;">
-        <span data-i18n-zh>自己编一份</span>
+        <span data-i18n-zh>自己从源码编译</span>
         <span data-i18n-en>Build from source</span>
       </h3>
       <p style="color:var(--muted); margin:6px 0 0;">
-        <span data-i18n-zh>需要 Xcode 15+，macOS 13+。</span>
+        <span data-i18n-zh>需要 Xcode 15 及以上、macOS 13 及以上。</span>
         <span data-i18n-en>Requires Xcode 15+ and macOS 13+.</span>
       </p>
       <pre class="code"><span class="k">git</span> clone https://github.com/TaylorSimery/claude-traffic-light.git
 <span class="k">cd</span> claude-traffic-light
-<span class="k">open</span> ClaudeTrafficLight.xcodeproj   <span class="c"># <span data-i18n-zh>或者直接命令行编：</span><span data-i18n-en>or build from the CLI:</span></span>
+<span class="k">open</span> ClaudeTrafficLight.xcodeproj   <span class="c"># <span data-i18n-zh>或者直接走命令行：</span><span data-i18n-en>or build from the CLI:</span></span>
 <span class="k">xcodebuild</span> -project ClaudeTrafficLight.xcodeproj \
            -scheme ClaudeTrafficLight \
            -configuration Release \

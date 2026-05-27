@@ -4,11 +4,11 @@ import AppKit
 struct MatteBlackBackground: NSViewRepresentable {
     func makeNSView(context: Context) -> NSVisualEffectView {
         let v = NSVisualEffectView()
-        v.material = .underWindowBackground
+        v.material = .hudWindow
         v.blendingMode = .behindWindow
         v.state = .active
         v.wantsLayer = true
-        v.layer?.cornerRadius = 28
+        v.layer?.cornerRadius = 30
         v.layer?.cornerCurve = .continuous
         v.layer?.masksToBounds = true
         return v
@@ -26,33 +26,19 @@ struct TrafficLightView: View {
         ZStack {
             MatteBlackBackground()
 
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(white: 0.10).opacity(0.95),
-                            Color(white: 0.02).opacity(0.98)
-                        ],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                )
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .fill(Color.black.opacity(0.55))
 
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [Color.white.opacity(0.06), Color.white.opacity(0.0)],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                )
-                .blendMode(.plusLighter)
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
 
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .stroke(Color.white.opacity(0.10), lineWidth: 0.6)
-
-            VStack(spacing: 18) {
-                Light(color: .red,    isOn: active == .error,   pulse: false)
-                Light(color: .yellow, isOn: active == .running, pulse: true)
-                Light(color: .green,  isOn: active == .success, pulse: false)
+            VStack(spacing: 20) {
+                Light(color: Color(red: 1.00, green: 0.27, blue: 0.27),
+                      isOn: active == .error,   pulse: false)
+                Light(color: Color(red: 1.00, green: 0.78, blue: 0.10),
+                      isOn: active == .running, pulse: true)
+                Light(color: Color(red: 0.18, green: 0.82, blue: 0.45),
+                      isOn: active == .success, pulse: false)
             }
             .padding(.vertical, 24)
         }
@@ -72,42 +58,26 @@ private struct Light: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(Color.black.opacity(0.65))
-                .frame(width: 50, height: 50)
-                .overlay(
-                    Circle().stroke(Color.white.opacity(0.08), lineWidth: 0.5)
-                )
+                .fill(Color.white.opacity(0.04))
+                .frame(width: 52, height: 52)
 
             Circle()
-                .fill(
-                    RadialGradient(
-                        colors: isOn
-                            ? [color.opacity(0.95), color.opacity(0.55)]
-                            : [color.opacity(0.16), color.opacity(0.04)],
-                        center: .init(x: 0.35, y: 0.30),
-                        startRadius: 1, endRadius: 28
-                    )
-                )
+                .fill(isOn ? color : color.opacity(0.18))
                 .frame(width: 44, height: 44)
-                .shadow(color: isOn ? color.opacity(0.85) : .clear,
-                        radius: isOn ? 14 : 0)
-                .shadow(color: isOn ? color.opacity(0.55) : .clear,
-                        radius: isOn ? 24 : 0)
-
-            Circle()
-                .fill(Color.white.opacity(isOn ? 0.55 : 0.08))
-                .frame(width: 12, height: 8)
-                .blur(radius: 3)
-                .offset(x: -8, y: -10)
+                .overlay(
+                    Circle().stroke(Color.white.opacity(isOn ? 0.18 : 0.05), lineWidth: 0.5)
+                )
+                .shadow(color: isOn ? color.opacity(0.75) : .clear, radius: isOn ? 12 : 0)
+                .shadow(color: isOn ? color.opacity(0.45) : .clear, radius: isOn ? 22 : 0)
 
             if isOn && pulse {
                 Circle()
-                    .stroke(color.opacity(0.6 - phase * 0.6), lineWidth: 2)
-                    .frame(width: 44 + phase * 26, height: 44 + phase * 26)
+                    .stroke(color.opacity(0.55 - phase * 0.55), lineWidth: 1.5)
+                    .frame(width: 44 + phase * 28, height: 44 + phase * 28)
             }
         }
-        .frame(width: 50, height: 50)
-        .animation(.easeInOut(duration: 0.35), value: isOn)
+        .frame(width: 52, height: 52)
+        .animation(.easeInOut(duration: 0.3), value: isOn)
         .onAppear {
             guard pulse else { return }
             withAnimation(.easeOut(duration: 1.2).repeatForever(autoreverses: false)) {
