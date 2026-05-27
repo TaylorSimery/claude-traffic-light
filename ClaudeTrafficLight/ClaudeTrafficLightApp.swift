@@ -19,10 +19,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let view = TrafficLightView(monitor: monitor)
             .environmentObject(monitor)
         let hosting = NSHostingView(rootView: view)
-        hosting.frame = NSRect(x: 0, y: 0, width: 92, height: 220)
+        hosting.frame = NSRect(x: 0, y: 0, width: 88, height: 232)
 
         let p = FloatingPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 92, height: 220),
+            contentRect: NSRect(x: 0, y: 0, width: 88, height: 232),
             backing: .buffered,
             defer: false
         )
@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         p.center()
         if let screen = NSScreen.main {
             let f = screen.visibleFrame
-            p.setFrameOrigin(NSPoint(x: f.maxX - 120, y: f.maxY - 260))
+            p.setFrameOrigin(NSPoint(x: f.maxX - 116, y: f.maxY - 270))
         }
         p.makeKeyAndOrderFront(nil)
         self.panel = p

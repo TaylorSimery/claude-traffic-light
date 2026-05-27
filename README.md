@@ -1,53 +1,53 @@
 # Claude Traffic Light
 
-A floating, frosted-glass traffic light widget for macOS that mirrors the live state of [Claude Code](https://claude.com/claude-code) on your desktop.
+**中文** · [English](README.en.md)
+
+一个浮窗式的磨砂黑交通信号灯，实时映射 macOS 上 [Claude Code](https://claude.com/claude-code) 的运行状态。
 
 <p align="center">
   <img src="docs/assets/icon.png" width="180" alt="Claude Traffic Light" />
 </p>
 
 <p align="center">
-  <a href="https://taylorsimery.github.io/claude-traffic-light/">Website</a>
+  <a href="https://taylorsimery.github.io/claude-traffic-light/">网站</a>
   ·
-  <a href="https://github.com/TaylorSimery/claude-traffic-light/releases">Download</a>
+  <a href="https://github.com/TaylorSimery/claude-traffic-light/releases">下载</a>
   ·
-  <a href="#getting-started">Getting started</a>
+  <a href="#快速开始">快速开始</a>
 </p>
 
-## Why
+## 为什么需要它
 
-Claude Code runs in a terminal, so it is easy to lose track of what it is doing while you switch away. Claude Traffic Light reads its session log and shows a single, glanceable signal:
+Claude Code 跑在终端里，你切走窗口就看不到它在做什么。Claude Traffic Light 读取它的会话日志，用一个能瞄一眼就懂的信号告诉你状态:
 
-- **Yellow** — running. Claude is thinking, streaming, or executing a tool.
-- **Green** — done. The last turn ended cleanly.
-- **Red** — needs you. A tool is waiting for permission, the run errored, or the process died.
+- **黄灯** — Claude 正在思考、流式输出或调用工具。
+- **绿灯** — 上一轮已经干净结束,可以回来看了。
+- **红灯** — 工具调用在等你确认,或运行出错,或进程退出。
 
-A small caption below the lights tells you which of those it is (`Working`, `Awaiting permission`, `Done`, …).
+## 特性
 
-## Features
+- 原生 SwiftUI 组件,没有 Electron、没有 Python、没有辅助脚本。
+- 磨砂黑面板,浮在所有窗口和所有 Space 之上,包括全屏应用。
+- 任意位置拖动,右键退出。
+- 没有菜单栏图标,没有 Dock 图标 — 以 `LSUIElement` 后台应用形式运行。
+- 直接读取 `~/.claude/projects/**/*.jsonl`,无网络、无埋点。
+- Universal 二进制,本地签名,Apple Silicon 与 Intel 均可,macOS 13 起。
 
-- Native SwiftUI widget. No Electron, no Python, no helper scripts.
-- Frosted-glass panel that floats above other windows on every Space, including full-screen apps.
-- Drag from anywhere on the panel. Right-click to quit.
-- No menu bar item, no Dock icon — set as a `LSUIElement` background app.
-- Reads `~/.claude/projects/**/*.jsonl` directly. No network, no telemetry.
-- Universal binary, runs locally-signed on Apple Silicon and Intel from macOS 13.
+## 快速开始
 
-## Getting started
+### 下载预编译版本
 
-### Download the prebuilt app
-
-1. Grab `ClaudeTrafficLight.zip` from the [latest release](https://github.com/TaylorSimery/claude-traffic-light/releases).
-2. Unzip and drop `ClaudeTrafficLight.app` into `/Applications`.
-3. The app is ad-hoc signed. The first launch needs a right-click → **Open**, or run once:
+1. 从 [最新 Release](https://github.com/TaylorSimery/claude-traffic-light/releases) 下载 `ClaudeTrafficLight.zip`。
+2. 解压后把 `ClaudeTrafficLight.app` 拖到 `/Applications`。
+3. 应用是 ad-hoc 签名,首次启动需要右键 → **打开**,或者执行一次:
    ```bash
    xattr -dr com.apple.quarantine /Applications/ClaudeTrafficLight.app
    ```
-4. Launch. The widget appears in the upper-right corner of your main display.
+4. 启动后,组件会出现在主屏幕右上角。
 
-### Build from source
+### 从源码构建
 
-Requires Xcode 15+ and macOS 13+.
+需要 Xcode 15+ 与 macOS 13+。
 
 ```bash
 git clone https://github.com/TaylorSimery/claude-traffic-light.git
@@ -55,7 +55,7 @@ cd claude-traffic-light
 open ClaudeTrafficLight.xcodeproj
 ```
 
-Hit **⌘R** to run, or build a Release `.app`:
+按 **⌘R** 运行,或者构建 Release 版:
 
 ```bash
 xcodebuild -project ClaudeTrafficLight.xcodeproj \
@@ -65,34 +65,34 @@ xcodebuild -project ClaudeTrafficLight.xcodeproj \
 open build/Build/Products/Release/ClaudeTrafficLight.app
 ```
 
-## How it detects status
+## 状态如何识别
 
-Claude Code writes one JSON object per line to `~/.claude/projects/<project>/<session>.jsonl` while it works. The widget polls the newest of those files once a second and looks at:
+Claude Code 在工作时,会按行写 JSON 到 `~/.claude/projects/<project>/<session>.jsonl`。组件每秒轮询最新文件,综合三个信号:
 
-- `pgrep claude` — is the CLI process still alive?
-- The `stop_reason` and `content` of the last message.
-- Whether the file has been modified in the last few seconds.
+- `pgrep claude` — CLI 进程是否还活着?
+- 最后一条消息的 `stop_reason` 与 `content`。
+- 文件最后一次修改距今多久。
 
-From those three signals it picks one of `running`, `success`, `error`, or `idle`. The full mapping lives in `ClaudeMonitor.swift` — it is short, single-file, and easy to adjust.
+据此选出 `running`、`success`、`error` 之一。完整规则在 `ClaudeMonitor.swift`,单文件、好改。
 
-## Project layout
+## 项目结构
 
 ```
 ClaudeTrafficLight/
-  ClaudeTrafficLightApp.swift    App entry point + window setup
-  FloatingPanel.swift            Borderless, always-on-top NSPanel
-  TrafficLightView.swift         SwiftUI light + frosted glass
-  ClaudeMonitor.swift            Polls Claude Code session logs
-  Assets.xcassets/AppIcon        Multi-resolution app icon
-  Info.plist                     LSUIElement, bundle metadata
-ClaudeTrafficLight.xcodeproj/    Plain Xcode project, no SPM, no pods
-docs/                            GitHub Pages landing page
+  ClaudeTrafficLightApp.swift    应用入口与窗口装配
+  FloatingPanel.swift            无边框、置顶的 NSPanel
+  TrafficLightView.swift         SwiftUI 信号灯与磨砂黑背景
+  ClaudeMonitor.swift            轮询 Claude Code 会话日志
+  Assets.xcassets/AppIcon        多分辨率应用图标
+  Info.plist                     LSUIElement 与 bundle 元数据
+ClaudeTrafficLight.xcodeproj/    纯 Xcode 工程,无 SPM 无 CocoaPods
+docs/                            GitHub Pages 落地页
 ```
 
-## License
+## 许可证
 
-MIT. See [LICENSE](LICENSE).
+MIT。详见 [LICENSE](LICENSE)。
 
-## Credits
+## 致谢
 
-Built with SwiftUI. Icon and visual language designed for [Claude Code](https://claude.com/claude-code) by Anthropic.
+基于 SwiftUI 构建。图标与视觉语言为 [Anthropic Claude Code](https://claude.com/claude-code) 设计。

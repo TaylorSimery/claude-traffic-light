@@ -6,14 +6,14 @@ enum ClaudeStatus: String {
 }
 
 final class ClaudeMonitor: ObservableObject {
-    @Published private(set) var status: ClaudeStatus = .idle
-    @Published private(set) var detail: String = "Waiting"
+    @Published private(set) var status: ClaudeStatus = .success
+    @Published private(set) var detail: String = ""
 
     private let claudeDir: URL
     private var timer: Timer?
-    private var lastActivity: Date = .distantPast
     private var lastSessionPath: String?
     private var lastSessionSize: UInt64 = 0
+    private var lastActivity: Date = .distantPast
 
     init() {
         let home = FileManager.default.homeDirectoryForCurrentUser
@@ -33,8 +33,7 @@ final class ClaudeMonitor: ObservableObject {
     private func tick() {
         let processAlive = isClaudeProcessRunning()
         guard let latest = newestSessionFile() else {
-            update(status: processAlive ? .running : .idle,
-                   detail: processAlive ? "Starting" : "No session")
+            update(status: .success)
             return
         }
 
@@ -53,14 +52,13 @@ final class ClaudeMonitor: ObservableObject {
         let signal = inferStatus(lastLine: lastLine,
                                  processAlive: processAlive,
                                  idleSeconds: interval)
-        update(status: signal.0, detail: signal.1)
+        update(status: signal)
     }
 
-    private func update(status: ClaudeStatus, detail: String) {
+    private func update(status: ClaudeStatus) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             if self.status != status { self.status = status }
-            if self.detail != detail { self.detail = detail }
         }
     }
 
@@ -115,55 +113,48 @@ final class ClaudeMonitor: ObservableObject {
     }
 
     private func inferStatus(lastLine: [String: Any]?, processAlive: Bool, idleSeconds: TimeInterval)
-        -> (ClaudeStatus, String)
+        -> ClaudeStatus
     {
         guard let line = lastLine else {
-            return processAlive ? (.running, "Working") : (.idle, "Idle")
+            return .success
         }
         let type = line["type"] as? String ?? ""
         let role = (line["message"] as? [String: Any])?["role"] as? String
 
-        if type == "system" {
-            if let sub = line["subtype"] as? String, sub.contains("error") {
-                return (.error, "System error")
-            }
+        if type == "system",
+           let sub = line["subtype"] as? String, sub.contains("error") {
+            return .error
         }
 
         if let msg = line["message"] as? [String: Any] {
             if let stop = msg["stop_reason"] as? String {
                 switch stop {
                 case "tool_use":
-                    if processAlive && idleSeconds < 3 {
-                        return (.running, "Calling tool")
-                    } else {
-                        return (.error, "Awaiting permission")
-                    }
-                case "end_turn":
-                    return (.success, "Done")
+                    return (processAlive && idleSeconds < 3) ? .running : .error
+                case "end_turn", "refusal", "stop_sequence":
+                    return .success
                 case "max_tokens":
-                    return (.error, "Truncated")
-                case "refusal", "stop_sequence":
-                    return (.success, "Done")
+                    return .error
                 default: break
                 }
             }
             if let content = msg["content"] as? [[String: Any]] {
                 for block in content {
-                    if (block["type"] as? String) == "tool_use" && processAlive && idleSeconds < 3 {
-                        return (.running, "Tool running")
+                    if (block["type"] as? String) == "tool_use",
+                       processAlive, idleSeconds < 3 {
+                        return .running
                     }
                 }
             }
         }
 
         if type == "user" || role == "user" {
-            return processAlive ? (.running, "Thinking") : (.idle, "Pending")
+            return (processAlive && idleSeconds < 30) ? .running : .success
         }
         if type == "assistant" || role == "assistant" {
-            if idleSeconds < 2 { return (.running, "Streaming") }
-            return (.success, "Done")
+            return idleSeconds < 2 ? .running : .success
         }
 
-        return processAlive ? (.running, "Working") : (.idle, "Idle")
+        return .success
     }
 }
