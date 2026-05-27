@@ -87,7 +87,7 @@ final class StatusMonitor: ObservableObject {
     @Published private(set) var snapshot = StatusSnapshot.initial
 
     private var timer: Timer?
-    private let fileManager = FileManager.default
+    private var isRefreshing = false
 
     private init() {}
 
@@ -107,35 +107,63 @@ final class StatusMonitor: ObservableObject {
     }
 
     func refresh() {
-        guard isClaudeCodeRunning() else {
-            snapshot = StatusSnapshot(
+        guard !isRefreshing else {
+            return
+        }
+        isRefreshing = true
+
+        Task.detached(priority: .utility) {
+            let nextSnapshot = StatusScanner().scan()
+            await MainActor.run {
+                StatusMonitor.shared.finishRefresh(nextSnapshot)
+            }
+        }
+    }
+
+    private func finishRefresh(_ nextSnapshot: StatusSnapshot) {
+        snapshot = nextSnapshot
+        isRefreshing = false
+    }
+}
+
+private struct StatusScanner {
+    private struct LogStatus {
+        var snapshot: StatusSnapshot
+        var logUpdatedAt: Date
+    }
+
+    private let fileManager = FileManager.default
+
+    func scan() -> StatusSnapshot {
+        let processRunning = isClaudeCodeRunning()
+
+        if let logStatus = readLatestLogStatus(processRunning: processRunning) {
+            return logStatus.snapshot
+        }
+
+        if processRunning {
+            return StatusSnapshot(
+                state: .running,
+                updatedAt: Date(),
+                source: "Claude Code 运行中",
+                transcriptPath: nil,
+                rawValue: "process_running"
+            )
+        } else {
+            return StatusSnapshot(
                 state: .error,
                 updatedAt: Date(),
-                source: "Claude Code 未运行",
+                source: "Claude Code 已停止",
                 transcriptPath: nil,
                 rawValue: "process_not_running"
             )
-            return
         }
-
-        if let logSnapshot = readLatestLogStatus() {
-            snapshot = logSnapshot
-            return
-        }
-
-        snapshot = StatusSnapshot(
-            state: .running,
-            updatedAt: Date(),
-            source: "Claude Code 运行中",
-            transcriptPath: nil,
-            rawValue: "process_running"
-        )
     }
 
-    private func isClaudeCodeRunning() -> Bool {
+    func isClaudeCodeRunning() -> Bool {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
-        process.arguments = ["-fl", "(^|[/[:space:]])claude($|[[:space:]-])|claude-code"]
+        process.executableURL = URL(fileURLWithPath: "/bin/ps")
+        process.arguments = ["-axo", "pid=,comm=,args="]
 
         let output = Pipe()
         process.standardOutput = output
@@ -143,12 +171,17 @@ final class StatusMonitor: ObservableObject {
 
         do {
             try process.run()
-            process.waitUntilExit()
         } catch {
             return false
         }
 
-        guard process.terminationStatus == 0 else {
+        let deadline = Date().addingTimeInterval(0.6)
+        while process.isRunning && Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.02)
+        }
+
+        if process.isRunning {
+            process.terminate()
             return false
         }
 
@@ -157,21 +190,49 @@ final class StatusMonitor: ObservableObject {
             return false
         }
 
+        if process.terminationStatus != 0 {
+            return false
+        }
+
         return text
             .split(separator: "\n")
             .map { $0.lowercased() }
             .contains { line in
-                !line.contains("claudetrafficlight")
-                    && !line.contains("claude-traffic-light")
-                    && !line.contains("pgrep")
+                isClaudeProcessLine(String(line))
             }
     }
 
-    private func readLatestLogStatus() -> StatusSnapshot? {
+    private func isClaudeProcessLine(_ line: String) -> Bool {
+        guard !line.contains("claudetrafficlight"),
+              !line.contains("claude-traffic-light"),
+              !line.contains("xcode"),
+              !line.contains("swift-frontend") else {
+            return false
+        }
+
+        let fields = line.split(separator: " ", maxSplits: 2, omittingEmptySubsequences: true)
+        guard fields.count >= 2 else {
+            return false
+        }
+
+        let command = String(fields[1])
+        let args = fields.count >= 3 ? String(fields[2]) : ""
+
+        return command.hasSuffix("/claude")
+            || command == "claude"
+            || args.contains("/bin/claude")
+            || args.contains("/claude ")
+            || args.contains(" claude ")
+            || args.hasPrefix("claude ")
+            || args.contains("claude-code")
+    }
+
+    private func readLatestLogStatus(processRunning: Bool) -> LogStatus? {
         guard let logURL = newestJSONLFile(in: StatusPaths.projectsDirectory),
               let lines = tailLines(from: logURL, byteLimit: 160_000) else {
             return nil
         }
+        let logUpdatedAt = modifiedDate(of: logURL) ?? Date()
 
         for line in lines.reversed() where !line.isEmpty {
             guard let data = line.data(using: .utf8),
@@ -179,12 +240,26 @@ final class StatusMonitor: ObservableObject {
                 continue
             }
 
-            if let inferred = inferStatus(from: object, transcriptPath: logURL.path) {
-                return inferred
+            if let inferred = inferStatus(
+                from: object,
+                transcriptPath: logURL.path,
+                logUpdatedAt: logUpdatedAt,
+                processRunning: processRunning
+            ) {
+                return LogStatus(snapshot: inferred, logUpdatedAt: logUpdatedAt)
             }
         }
 
-        return StatusSnapshot(state: .idle, updatedAt: modifiedDate(of: logURL) ?? Date(), source: "Claude 日志", transcriptPath: logURL.path, rawValue: "unknown")
+        return LogStatus(
+            snapshot: StatusSnapshot(
+                state: processRunning ? .running : .error,
+                updatedAt: logUpdatedAt,
+                source: processRunning ? "Claude 日志" : "Claude Code 已停止",
+                transcriptPath: logURL.path,
+                rawValue: processRunning ? "unknown" : "process_not_running"
+            ),
+            logUpdatedAt: logUpdatedAt
+        )
     }
 
     private func newestJSONLFile(in directory: URL) -> URL? {
@@ -233,11 +308,19 @@ final class StatusMonitor: ObservableObject {
         return text.components(separatedBy: .newlines)
     }
 
-    private func inferStatus(from object: [String: Any], transcriptPath: String) -> StatusSnapshot? {
+    private func inferStatus(
+        from object: [String: Any],
+        transcriptPath: String,
+        logUpdatedAt: Date,
+        processRunning: Bool
+    ) -> StatusSnapshot? {
         let hookEvent = (object["hook_event_name"] as? String) ?? (object["hookEventName"] as? String)
         if let hookEvent {
             switch hookEvent {
             case "UserPromptSubmit", "PreToolUse", "PostToolUse", "PreCompact", "SessionStart", "SubagentStop":
+                if shouldTreatRunningStateAsStopped(logUpdatedAt: logUpdatedAt, processRunning: processRunning) {
+                    return stoppedSnapshot(transcriptPath: transcriptPath, logUpdatedAt: logUpdatedAt, rawValue: hookEvent)
+                }
                 return StatusSnapshot(state: .running, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: hookEvent)
             case "PermissionRequest":
                 return StatusSnapshot(state: .error, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: hookEvent)
@@ -250,31 +333,84 @@ final class StatusMonitor: ObservableObject {
             }
         }
 
-        if let type = object["type"] as? String, type == "permission-request" || type == "permission_request" {
-            return StatusSnapshot(state: .error, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: type)
+        if let type = object["type"] as? String {
+            let normalizedType = type.lowercased()
+            if ["permission-request", "permission_request", "permission-denied", "error", "interrupted", "abort", "sessionend"].contains(normalizedType) {
+                return StatusSnapshot(state: .error, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: type)
+            }
+            if normalizedType == "last-prompt" || normalizedType == "permission-mode" || normalizedType == "file-history-snapshot" {
+                return nil
+            }
         }
 
         if let attachment = object["attachment"] as? [String: Any],
-           attachment["type"] as? String == "hook_non_blocking_error" {
-            return StatusSnapshot(state: .error, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: "hook_non_blocking_error")
+           let attachmentType = attachment["type"] as? String {
+            let normalizedAttachment = attachmentType.lowercased()
+            if normalizedAttachment.contains("error")
+                || normalizedAttachment.contains("interrupted")
+                || normalizedAttachment.contains("denied")
+                || normalizedAttachment.contains("rejected") {
+                return StatusSnapshot(state: .error, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: attachmentType)
+            }
         }
 
         if object["type"] as? String == "assistant",
            let message = object["message"] as? [String: Any],
            let stopReason = message["stop_reason"] as? String {
             if stopReason == "tool_use" {
+                if shouldTreatRunningStateAsStopped(logUpdatedAt: logUpdatedAt, processRunning: processRunning) {
+                    return stoppedSnapshot(transcriptPath: transcriptPath, logUpdatedAt: logUpdatedAt, rawValue: stopReason)
+                }
                 return StatusSnapshot(state: .running, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: stopReason)
             }
             if ["end_turn", "stop_sequence", "max_tokens"].contains(stopReason) {
                 return StatusSnapshot(state: .success, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: stopReason)
             }
+            if ["error", "cancelled", "canceled", "interrupted", "abort"].contains(stopReason) {
+                return StatusSnapshot(state: .error, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: stopReason)
+            }
         }
 
         if object["type"] as? String == "user",
-           object["message"] != nil {
+           let message = object["message"] as? [String: Any] {
+            if let content = message["content"] as? [[String: Any]],
+               content.contains(where: isErrorToolResult) {
+                return StatusSnapshot(state: .error, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: "tool_result_error")
+            }
+            if shouldTreatRunningStateAsStopped(logUpdatedAt: logUpdatedAt, processRunning: processRunning) {
+                return stoppedSnapshot(transcriptPath: transcriptPath, logUpdatedAt: logUpdatedAt, rawValue: "user_prompt")
+            }
             return StatusSnapshot(state: .running, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: "user_prompt")
         }
 
         return nil
+    }
+
+    private func isErrorToolResult(_ item: [String: Any]) -> Bool {
+        guard item["type"] as? String == "tool_result" else {
+            return false
+        }
+        if item["is_error"] as? Bool == true {
+            return true
+        }
+        let content = String(describing: item["content"] ?? "").lowercased()
+        return content.contains("rejected")
+            || content.contains("interrupted")
+            || content.contains("doesn't want to proceed")
+            || content.contains("error")
+    }
+
+    private func shouldTreatRunningStateAsStopped(logUpdatedAt: Date, processRunning: Bool) -> Bool {
+        !processRunning || Date().timeIntervalSince(logUpdatedAt) > 20
+    }
+
+    private func stoppedSnapshot(transcriptPath: String, logUpdatedAt: Date, rawValue: String) -> StatusSnapshot {
+        StatusSnapshot(
+            state: .error,
+            updatedAt: logUpdatedAt,
+            source: "Claude Code 已停止",
+            transcriptPath: transcriptPath,
+            rawValue: rawValue
+        )
     }
 }

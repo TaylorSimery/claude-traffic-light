@@ -1,131 +1,126 @@
 # Claude Traffic Light
 
-Claude Traffic Light is a tiny macOS widget for Claude Code.
+> Tiny native macOS traffic-light widget for Claude Code.  
+> 一个悬浮在桌面上的 Claude Code 状态灯。
 
-它像一枚挂在桌面上的信号灯，帮你一眼判断 Claude Code 现在在做什么。
+[官网 / Website](https://taylorsimery.github.io/claude-traffic-light/) ·
+[下载 / Releases](https://github.com/TaylorSimery/claude-traffic-light/releases) ·
+[English README](README.en.md)
 
-## What it means
+<p align="center">
+  <a href="https://taylorsimery.github.io/claude-traffic-light/">
+    <img src="docs/traffic-light-icon.png" width="180" alt="Claude Traffic Light icon">
+  </a>
+</p>
 
-- Yellow / 黄灯: Claude is thinking, streaming, or using a tool.
-- Green / 绿灯: the last turn finished cleanly.
-- Red / 红灯: Claude Code is not running, is waiting for permission, or has hit an error.
+<p align="center">
+  <img src="docs/UI.png" width="180" alt="Claude Traffic Light UI reference">
+</p>
 
-## What you get
+## 它解决什么问题
 
-- Pure SwiftUI app.
-- No Electron.
-- No Python.
-- No helper scripts inside the app.
-- No Dock icon.
-- No menu bar icon.
-- A borderless widget that floats above normal windows and full-screen spaces.
-- Drag from anywhere.
-- Right-click to quit.
+Claude Code 跑在终端里。你一切到浏览器、设计稿、Xcode 或全屏应用，就不知道它现在是还在忙、已经完成，还是卡在权限确认。
 
-## Install
+Claude Traffic Light 把这个状态变成一个小小的桌面信号灯：
 
-### 1. Download the release
+- 黄灯: Claude 正在思考、流式输出或调用工具。
+- 绿灯: 上一轮干净结束，可以回来看。
+- 红灯: Claude Code 没运行、被中断、退出、报错，或正在等权限处理。
 
-Get `ClaudeTrafficLight.zip` from GitHub Releases and unzip it.
+## 特性
 
-### 2. Move the app
+- 原生 SwiftUI。
+- 没有 Electron。
+- 没有 Python。
+- App 内没有辅助脚本。
+- 无 Dock 图标、无菜单栏图标。
+- `LSUIElement` 后台挂件形态。
+- 悬浮在所有窗口和所有 Space 上，包括全屏应用。
+- 任意位置拖动。
+- 右键退出。
+- 本机读取 `~/.claude/projects/**/*.jsonl`，不上传数据。
 
-Drag `ClaudeTrafficLight.app` into `/Applications`.
+## 快速安装
 
-### 3. Open it once
+1. 打开 [Releases](https://github.com/TaylorSimery/claude-traffic-light/releases)。
+2. 下载 `ClaudeTrafficLight.zip`。
+3. 解压后把 `ClaudeTrafficLight.app` 拖进 `/Applications`。
+4. 第一次启动时，右键 App 选择 **Open**。
+5. 打开终端运行 `claude`，提交一次 prompt。
+6. 看桌面右上角的小信号灯。
 
-Because macOS protects downloaded apps, the first launch may need:
-
-- right-click the app and choose **Open**
-- or remove quarantine from Terminal:
+如果 macOS 阻止打开，可以执行：
 
 ```sh
 xattr -dr com.apple.quarantine /Applications/ClaudeTrafficLight.app
 ```
 
-### 4. Launch Claude Traffic Light
+## 怎么用
 
-You will see the mini traffic light floating near the top-right of your screen.
+- 红灯: 先确认 Claude Code 是否运行，或者回终端处理权限/错误。
+- 黄灯: Claude 还在忙，继续做别的事情。
+- 绿灯: 可以切回终端看结果。
 
-If Claude Code is not running, the light is red.
+如果 Claude Code 进程结束、被 Ctrl+C 中断、工具调用被拒绝，App 会切到红灯。
 
-## How to use it
+## 排障
 
-- Start Claude Code in Terminal.
-- Keep working in other windows.
-- Look at the widget when you want a status check.
-- Yellow means it is still active.
-- Green means the last turn ended cleanly.
-- Red means something needs attention, or Claude Code is not running.
+### 一直红灯
 
-## If the light stays red
+1. 确认终端里正在运行 Claude Code。
+2. 在 Claude Code 里提交一次 prompt。
+3. 确认 `~/.claude/projects` 下有新的 `.jsonl` 文件。
+4. 重新打开 Claude Traffic Light。
 
-1. Make sure Claude Code is actually running in Terminal.
-2. Run at least one prompt in that session.
-3. Check that Claude Code is writing transcripts under `~/.claude/projects`.
-4. Reopen the app after Claude Code starts if needed.
+### 看不到窗口
 
-## Build from source
+它没有 Dock 图标和菜单栏图标。可以在“活动监视器”里搜索 `ClaudeTrafficLight` 退出后重开。
 
-Requirements:
+### 怎么退出
 
-- macOS 13 or later
+右键点击信号灯，选择退出。
+
+## 从源码构建
+
+要求：
+
+- macOS 13+
 - Xcode 26+
 
-Open the project:
-
 ```sh
+git clone https://github.com/TaylorSimery/claude-traffic-light.git
+cd claude-traffic-light
 open ClaudeTrafficLight.xcodeproj
 ```
 
-Build a Release app:
+命令行构建：
 
 ```sh
 xcodebuild -project ClaudeTrafficLight.xcodeproj -scheme ClaudeTrafficLight -configuration Release -derivedDataPath build/DerivedData build
 ```
 
-The app bundle will be created at:
+产物位置：
 
 ```sh
 build/DerivedData/Build/Products/Release/ClaudeTrafficLight.app
 ```
 
-## Project layout
+## English
 
-```text
-ClaudeTrafficLight/
-  ClaudeTrafficLightApp.swift
-  AppDelegate.swift
-  StatusMonitor.swift
-  TrafficLightView.swift
-  Assets.xcassets/
-  Info.plist
-docs/
-  index.html
-```
+Claude Traffic Light is a tiny native macOS widget for Claude Code.
 
-## FAQ
+It floats above your windows and turns Claude Code state into a simple signal:
 
-### Why does it have no Dock icon?
+- Yellow: Claude is thinking, streaming, or using tools.
+- Green: the last turn completed cleanly.
+- Red: Claude Code is closed, interrupted, waiting for permission, or in an error state.
 
-It is an `LSUIElement` background app, so it behaves like a widget rather than a normal windowed app.
+Install:
 
-### How do I quit?
+1. Download `ClaudeTrafficLight.zip` from [Releases](https://github.com/TaylorSimery/claude-traffic-light/releases).
+2. Unzip it.
+3. Move `ClaudeTrafficLight.app` to `/Applications`.
+4. Right-click and choose **Open** on first launch.
+5. Start Claude Code with `claude`.
 
-Right-click the widget and choose the quit item in the menu.
-
-### Can I move it?
-
-Yes. Drag from any empty part of the widget.
-
-### Does it need hooks or scripts?
-
-No. The current version reads Claude Code transcripts directly.
-
-### What if I never see green?
-
-That usually means Claude Code has not finished a turn yet, or the transcript is still changing.
-
-## Website
-
-The project site lives in `docs/` and is published through GitHub Pages.
+Project website: <https://taylorsimery.github.io/claude-traffic-light/>
