@@ -77,8 +77,6 @@ struct StatusSnapshot: Equatable {
 enum StatusPaths {
     static let home = FileManager.default.homeDirectoryForCurrentUser
     static let claudeDirectory = home.appendingPathComponent(".claude", isDirectory: true)
-    static let statusFile = claudeDirectory.appendingPathComponent("traffic_light_status")
-    static let eventFile = claudeDirectory.appendingPathComponent("traffic_light_event.json")
     static let projectsDirectory = claudeDirectory.appendingPathComponent("projects", isDirectory: true)
 }
 
@@ -109,57 +107,12 @@ final class StatusMonitor: ObservableObject {
     }
 
     func refresh() {
-        if let hookSnapshot = readHookStatus() {
-            snapshot = hookSnapshot
-            return
-        }
-
         if let logSnapshot = readLatestLogStatus() {
             snapshot = logSnapshot
             return
         }
 
         snapshot = StatusSnapshot(state: .idle, updatedAt: Date(), source: "未找到 Claude 状态", transcriptPath: nil, rawValue: nil)
-    }
-
-    private func readHookStatus() -> StatusSnapshot? {
-        guard let raw = try? String(contentsOf: StatusPaths.statusFile, encoding: .utf8)
-            .trimmingCharacters(in: .whitespacesAndNewlines),
-              !raw.isEmpty else {
-            return nil
-        }
-
-        let attributes = try? fileManager.attributesOfItem(atPath: StatusPaths.statusFile.path)
-        let modified = attributes?[.modificationDate] as? Date ?? Date()
-        return StatusSnapshot(
-            state: mapStatus(raw),
-            updatedAt: modified,
-            source: "Claude hook",
-            transcriptPath: readEventTranscriptPath(),
-            rawValue: raw
-        )
-    }
-
-    private func readEventTranscriptPath() -> String? {
-        guard let data = try? Data(contentsOf: StatusPaths.eventFile),
-              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            return nil
-        }
-        return object["transcript_path"] as? String
-    }
-
-    private func mapStatus(_ value: String) -> ClaudeState {
-        let normalized = value.lowercased()
-        if ["running", "processing", "thinking", "streaming", "running_tool", "compacting", "yellow"].contains(normalized) {
-            return .running
-        }
-        if ["success", "done", "complete", "completed", "clean", "green"].contains(normalized) {
-            return .success
-        }
-        if ["error", "failed", "failure", "permission", "waiting_permission", "ended", "exit", "red"].contains(normalized) {
-            return .error
-        }
-        return .idle
     }
 
     private func readLatestLogStatus() -> StatusSnapshot? {
@@ -179,7 +132,7 @@ final class StatusMonitor: ObservableObject {
             }
         }
 
-        return nil
+        return StatusSnapshot(state: .idle, updatedAt: modifiedDate(of: logURL) ?? Date(), source: "Claude 日志", transcriptPath: logURL.path, rawValue: "unknown")
     }
 
     private func newestJSONLFile(in directory: URL) -> URL? {
@@ -205,6 +158,11 @@ final class StatusMonitor: ObservableObject {
         return newest?.url
     }
 
+    private func modifiedDate(of url: URL) -> Date? {
+        let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
+        return values?.contentModificationDate
+    }
+
     private func tailLines(from url: URL, byteLimit: UInt64) -> [String]? {
         guard let handle = try? FileHandle(forReadingFrom: url) else {
             return nil
@@ -224,6 +182,26 @@ final class StatusMonitor: ObservableObject {
     }
 
     private func inferStatus(from object: [String: Any], transcriptPath: String) -> StatusSnapshot? {
+        let hookEvent = (object["hook_event_name"] as? String) ?? (object["hookEventName"] as? String)
+        if let hookEvent {
+            switch hookEvent {
+            case "UserPromptSubmit", "PreToolUse", "PostToolUse", "PreCompact", "SessionStart", "SubagentStop":
+                return StatusSnapshot(state: .running, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: hookEvent)
+            case "PermissionRequest":
+                return StatusSnapshot(state: .error, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: hookEvent)
+            case "Stop":
+                return StatusSnapshot(state: .success, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: hookEvent)
+            case "SessionEnd":
+                return StatusSnapshot(state: .error, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: hookEvent)
+            default:
+                break
+            }
+        }
+
+        if let type = object["type"] as? String, type == "permission-request" || type == "permission_request" {
+            return StatusSnapshot(state: .error, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: type)
+        }
+
         if let attachment = object["attachment"] as? [String: Any],
            attachment["type"] as? String == "hook_non_blocking_error" {
             return StatusSnapshot(state: .error, updatedAt: Date(), source: "Claude 日志", transcriptPath: transcriptPath, rawValue: "hook_non_blocking_error")
