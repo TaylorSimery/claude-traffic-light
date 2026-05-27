@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Claude Traffic Light — A glanceable signal for Claude Code</title>
+<meta name="description" content="A frosted-glass macOS widget that mirrors the live state of Claude Code on your desktop. Yellow when it is running, green when it is done, red when it needs you." />
+<link rel="icon" href="assets/icon.png" />
+<meta property="og:title" content="Claude Traffic Light" />
+<meta property="og:description" content="A glanceable macOS widget for Claude Code." />
+<meta property="og:image" content="assets/icon.png" />
+<style>
+  :root {
+    --bg-0: #06070a;
+    --bg-1: #0d1016;
+    --bg-2: #141821;
+    --fg: #f4f5f7;
+    --muted: #9aa3b2;
+    --accent: #ffd166;
+    --green: #34d399;
+    --yellow: #facc15;
+    --red: #f87171;
+    --card: rgba(255, 255, 255, 0.05);
+    --card-stroke: rgba(255, 255, 255, 0.10);
+    --radius-lg: 28px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
+    --shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.6), 0 8px 30px -10px rgba(0, 0, 0, 0.4);
+    --maxw: 1100px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    color: var(--fg);
+    background:
+      radial-gradient(1100px 700px at 80% -10%, rgba(250, 204, 21, 0.10), transparent 60%),
+      radial-gradient(900px 600px at 0% 10%, rgba(96, 165, 250, 0.10), transparent 60%),
+      radial-gradient(700px 500px at 50% 110%, rgba(52, 211, 153, 0.08), transparent 60%),
+      var(--bg-0);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    line-height: 1.55;
+  }
+  a { color: inherit; text-decoration: none; }
+  .container { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
+
+  /* --- nav --- */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: saturate(180%) blur(18px);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+    background: rgba(6, 7, 10, 0.55);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  nav .inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.01em; }
+  nav .brand img { width: 26px; height: 26px; border-radius: 7px; }
+  nav .links { display: flex; gap: 22px; font-size: 14px; color: var(--muted); }
+  nav .links a:hover { color: var(--fg); }
+  nav .cta {
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--fg);
+    color: #0a0d12;
+    font-weight: 600;
+    font-size: 13px;
+    transition: transform .15s ease;
+  }
+  nav .cta:hover { transform: translateY(-1px); }
+
+  /* --- hero --- */
+  header.hero {
+    position: relative; overflow: hidden;
+    padding: 96px 0 72px;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+  @media (max-width: 880px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 24px; }
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--card-stroke);
+    background: var(--card);
+    backdrop-filter: blur(10px);
+    border-radius: 999px;
+    font-size: 12px; color: var(--muted);
+  }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); }
+  h1 {
+    font-size: clamp(40px, 6vw, 64px);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    margin: 18px 0 16px;
+    font-weight: 700;
+    background: linear-gradient(180deg, #ffffff, #b9c0cc 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .lede {
+    color: var(--muted);
+    font-size: 18px; max-width: 540px;
+  }
+  .actions {
+    display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px;
+  }
+  .btn {
+    padding: 12px 20px;
+    border-radius: 14px;
+    font-size: 14px; font-weight: 600;
+    border: 1px solid transparent;
+    transition: transform .15s ease, background .15s ease, border .15s ease;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: var(--fg); color: #0a0d12;
+  }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-ghost {
+    background: var(--card);
+    border-color: var(--card-stroke);
+    color: var(--fg);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.09); }
+  .meta {
+    margin-top: 22px; display: flex; gap: 18px; flex-wrap: wrap;
+    font-size: 13px; color: var(--muted);
+  }
+  .meta span { display: inline-flex; align-items: center; gap: 6px; }
+
+  /* --- hero widget mock --- */
+  .widget-stage {
+    display: flex; justify-content: center; align-items: center;
+    height: 460px;
+    perspective: 1400px;
+  }
+  .widget {
+    width: 184px; height: 440px;
+    border-radius: 44px;
+    padding: 28px 0;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02)),
+      rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(34px) saturate(160%);
+    -webkit-backdrop-filter: blur(34px) saturate(160%);
+    box-shadow: var(--shadow);
+    transform: rotateX(8deg) rotateY(-12deg);
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    transition: transform .6s cubic-bezier(.2,.8,.2,1);
+  }
+  .widget:hover { transform: rotateX(2deg) rotateY(-2deg); }
+  .widget .lights { display: flex; flex-direction: column; gap: 28px; align-items: center; padding-top: 6px; }
+  .lamp {
+    position: relative; width: 100px; height: 100px; border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lamp .bulb {
+    width: 84px; height: 84px; border-radius: 50%;
+    transition: filter .3s ease, box-shadow .3s ease, opacity .3s ease;
+  }
+  .lamp .glint {
+    position: absolute; left: 18px; top: 16px;
+    width: 24px; height: 14px; border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    filter: blur(5px);
+  }
+  .lamp.red .bulb { background: radial-gradient(circle at 35% 30%, rgba(248,113,113,0.18), rgba(248,113,113,0.04)); }
+  .lamp.yellow .bulb { background: radial-gradient(circle at 35% 30%, rgba(250,204,21,0.18), rgba(250,204,21,0.04)); }
+  .lamp.green .bulb { background: radial-gradient(circle at 35% 30%, rgba(52,211,153,0.18), rgba(52,211,153,0.04)); }
+  .lamp.active.red .bulb { background: radial-gradient(circle at 35% 30%, #fca5a5, #ef4444); box-shadow: 0 0 30px #ef4444, 0 0 60px rgba(239,68,68,.6); }
+  .lamp.active.yellow .bulb { background: radial-gradient(circle at 35% 30%, #fde68a, #eab308); box-shadow: 0 0 30px #facc15, 0 0 60px rgba(250,204,21,.6); }
+  .lamp.active.green .bulb { background: radial-gradient(circle at 35% 30%, #6ee7b7, #10b981); box-shadow: 0 0 30px #34d399, 0 0 60px rgba(52,211,153,.6); }
+  .lamp.active .glint { background: rgba(255,255,255,0.85); }
+  .widget .caption {
+    font-size: 13px; color: var(--muted); font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  /* --- features --- */
+  section { padding: 72px 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.16em; font-size: 11px;
+    color: var(--muted); font-weight: 600;
+  }
+  h2 {
+    font-size: clamp(28px, 3.6vw, 40px);
+    line-height: 1.1; letter-spacing: -0.02em;
+    margin: 8px 0 14px; font-weight: 700;
+  }
+  .section-lede { color: var(--muted); max-width: 640px; }
+  .grid {
+    display: grid; gap: 18px;
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: 36px;
+  }
+  @media (max-width: 880px) { .grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 580px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    padding: 22px;
+    border-radius: var(--radius-md);
+    background: var(--card);
+    border: 1px solid var(--card-stroke);
+    backdrop-filter: blur(20px);
+    transition: transform .2s ease, border .2s ease, background .2s ease;
+  }
+  .card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.18); }
+  .card .icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.06);
+    margin-bottom: 14px;
+  }
+  .card h3 { margin: 6px 0 6px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+  .card p { color: var(--muted); font-size: 14px; margin: 0; }
+
+  /* --- states row --- */
+  .states {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 18px; margin-top: 36px;
+  }
+  @media (max-width: 720px) { .states { grid-template-columns: 1fr; } }
+  .state {
+    padding: 24px; border-radius: var(--radius-md);
+    background: var(--card); border: 1px solid var(--card-stroke);
+    display: flex; gap: 18px; align-items: flex-start;
+  }
+  .state .swatch {
+    width: 48px; height: 48px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .state.yellow .swatch { background: radial-gradient(circle at 35% 30%, #fde68a, #eab308); box-shadow: 0 0 20px rgba(250,204,21,.55); }
+  .state.green  .swatch { background: radial-gradient(circle at 35% 30%, #6ee7b7, #10b981); box-shadow: 0 0 20px rgba(52,211,153,.55); }
+  .state.red    .swatch { background: radial-gradient(circle at 35% 30%, #fca5a5, #ef4444); box-shadow: 0 0 20px rgba(239,68,68,.55); }
+  .state h4 { margin: 0 0 4px; font-weight: 600; font-size: 15px; }
+  .state p  { margin: 0; color: var(--muted); font-size: 13.5px; }
+
+  /* --- install --- */
+  .install {
+    margin-top: 32px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--card-stroke);
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    padding: 32px;
+  }
+  .install ol { padding-left: 18px; margin: 12px 0 0; color: var(--muted); }
+  .install ol li { margin: 8px 0; }
+  pre.code {
+    margin-top: 14px;
+    background: #07090d;
+    border: 1px solid var(--card-stroke);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+    font-size: 13px;
+    color: #d6dbe3;
+    overflow-x: auto;
+  }
+  pre.code .c { color: #6b7488; }
+  pre.code .k { color: #facc15; }
+
+  /* --- footer --- */
+  footer {
+    padding: 48px 0 64px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 32px;
+  }
+  footer .row {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+  }
+  footer a:hover { color: var(--fg); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container inner">
+    <a class="brand" href="#top">
+      <img src="assets/icon.png" alt="" />
+      Claude Traffic Light
+    </a>
+    <div class="links">
+      <a href="#features">Features</a>
+      <a href="#states">Status</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/TaylorSimery/claude-traffic-light">GitHub</a>
+    </div>
+    <a class="cta" href="https://github.com/TaylorSimery/claude-traffic-light/releases">Download</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="container hero-grid">
+    <div>
+      <span class="pill"><span class="dot"></span> Built for Claude Code on macOS</span>
+      <h1>A traffic light that<br/>mirrors your agent.</h1>
+      <p class="lede">
+        Claude Traffic Light is a frosted-glass desktop widget that watches Claude Code in real time. One glance is enough to know if it is working, finished, or waiting on you.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="https://github.com/TaylorSimery/claude-traffic-light/releases">Download for macOS</a>
+        <a class="btn btn-ghost" href="https://github.com/TaylorSimery/claude-traffic-light">View on GitHub</a>
+      </div>
+      <div class="meta">
+        <span>● macOS 13+</span>
+        <span>● Apple Silicon &amp; Intel</span>
+        <span>● MIT licensed</span>
+      </div>
+    </div>
+    <div class="widget-stage">
+      <div class="widget" id="widget">
+        <div class="lights">
+          <div class="lamp red" data-state="red"><div class="bulb"></div><div class="glint"></div></div>
+          <div class="lamp yellow active" data-state="yellow"><div class="bulb"></div><div class="glint"></div></div>
+          <div class="lamp green" data-state="green"><div class="bulb"></div><div class="glint"></div></div>
+        </div>
+        <div class="caption" id="caption">Working</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="container">
+    <span class="eyebrow">Features</span>
+    <h2>Quiet on your desk.<br/>Loud when it matters.</h2>
+    <p class="section-lede">No menu bar clutter, no Dock icon, no notifications. Just one tiny pane of glass that tells you exactly where the agent is.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="icon">🪟</div>
+        <h3>Frosted-glass widget</h3>
+        <p>Native SwiftUI panel with vibrancy and a soft drop-shadow. Floats above other windows on every Space.</p>
+      </div>
+      <div class="card">
+        <div class="icon">⚡</div>
+        <h3>Live session reading</h3>
+        <p>Polls <code>~/.claude/projects/**/*.jsonl</code> every second. No network, no telemetry, no daemon.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🪶</div>
+        <h3>Zero footprint</h3>
+        <p>Runs as an <code>LSUIElement</code> background app. ~250 KB executable. Drag to move, right-click to quit.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🍎</div>
+        <h3>Pure Apple stack</h3>
+        <p>SwiftUI + AppKit. No Electron, no Python, no helper scripts. Universal binary signed for local run.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔒</div>
+        <h3>Local only</h3>
+        <p>Reads files in your home directory. Nothing leaves the machine. Source is short and auditable.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🛠</div>
+        <h3>Hackable</h3>
+        <p>State logic lives in a single Swift file — adjust the rules, recompile in Xcode, run.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="states">
+  <div class="container">
+    <span class="eyebrow">Status mapping</span>
+    <h2>Three colors. One signal.</h2>
+    <p class="section-lede">Claude Traffic Light reads the latest message in your active session and the CLI process state, then picks one light.</p>
+    <div class="states">
+      <div class="state yellow">
+        <div class="swatch"></div>
+        <div>
+          <h4>Yellow — Working</h4>
+          <p>Claude is thinking, streaming, or executing a tool. The session log is moving.</p>
+        </div>
+      </div>
+      <div class="state green">
+        <div class="swatch"></div>
+        <div>
+          <h4>Green — Done</h4>
+          <p>The last turn ended cleanly with <code>end_turn</code>. Safe to come back.</p>
+        </div>
+      </div>
+      <div class="state red">
+        <div class="swatch"></div>
+        <div>
+          <h4>Red — Needs you</h4>
+          <p>A tool call is awaiting permission, the run errored, or the process exited.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="container">
+    <span class="eyebrow">Install</span>
+    <h2>Two ways to get it running.</h2>
+
+    <div class="install">
+      <h3 style="margin:0 0 4px;">Prebuilt app</h3>
+      <ol>
+        <li>Download <code>ClaudeTrafficLight.zip</code> from <a href="https://github.com/TaylorSimery/claude-traffic-light/releases">Releases</a>.</li>
+        <li>Move <code>ClaudeTrafficLight.app</code> to <code>/Applications</code>.</li>
+        <li>First launch: right-click the app → <strong>Open</strong>, or run the command below to drop the quarantine flag.</li>
+      </ol>
+      <pre class="code"><span class="c"># clear quarantine for the ad-hoc signed build</span>
+<span class="k">xattr</span> -dr com.apple.quarantine /Applications/ClaudeTrafficLight.app</pre>
+    </div>
+
+    <div class="install" style="margin-top:18px;">
+      <h3 style="margin:0 0 4px;">Build from source</h3>
+      <p style="color:var(--muted); margin:6px 0 0;">Requires Xcode 15+ and macOS 13+.</p>
+      <pre class="code"><span class="k">git</span> clone https://github.com/TaylorSimery/claude-traffic-light.git
+<span class="k">cd</span> claude-traffic-light
+<span class="k">open</span> ClaudeTrafficLight.xcodeproj   <span class="c"># or build from the CLI:</span>
+<span class="k">xcodebuild</span> -project ClaudeTrafficLight.xcodeproj \
+           -scheme ClaudeTrafficLight \
+           -configuration Release \
+           -derivedDataPath build clean build</pre>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container row">
+    <div>© 2026 Taylor Simery. MIT.</div>
+    <div>
+      <a href="https://github.com/TaylorSimery/claude-traffic-light">GitHub</a> ·
+      <a href="https://github.com/TaylorSimery/claude-traffic-light/issues">Issues</a> ·
+      <a href="https://claude.com/claude-code">Claude Code</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Cycle the demo widget through states so the page feels alive.
+  const order = ['yellow', 'green', 'red', 'yellow'];
+  const captions = {
+    yellow: 'Working',
+    green: 'Done',
+    red: 'Awaiting permission'
+  };
+  let i = 0;
+  setInterval(() => {
+    i = (i + 1) % order.length;
+    const next = order[i];
+    document.querySelectorAll('.lamp').forEach(el => {
+      el.classList.toggle('active', el.dataset.state === next);
+    });
+    document.getElementById('caption').textContent = captions[next];
+  }, 1800);
+</script>
+</body>
+</html>

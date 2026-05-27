@@ -1,0 +1,9 @@
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.DS_Store
+*.swp
+.idea/
+.vscode/
+release/ClaudeTrafficLight.app/
