@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code 红绿灯 - Traffic Light</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            opacity: 0.95;
+            margin-bottom: 40px;
+        }
+
+        .traffic-light-demo {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .light {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .light.red {
+            background: #FF3B30;
+            box-shadow: 0 0 40px rgba(255,59,48,0.6);
+            animation-delay: 0s;
+        }
+
+        .light.yellow {
+            background: #FF9F0A;
+            box-shadow: 0 0 40px rgba(255,159,10,0.6);
+            animation-delay: 0.7s;
+        }
+
+        .light.green {
+            background: #30D158;
+            box-shadow: 0 0 40px rgba(48,209,88,0.6);
+            animation-delay: 1.4s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .content {
+            background: white;
+            border-radius: 20px;
+            padding: 60px;
+            margin: 40px 0;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .feature {
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .feature h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .status-explanation {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+
+        .status-card {
+            padding: 25px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+        }
+
+        .status-card.red {
+            background: linear-gradient(135deg, #FF3B30 0%, #d32f2f 100%);
+        }
+
+        .status-card.yellow {
+            background: linear-gradient(135deg, #FF9F0A 0%, #f57c00 100%);
+        }
+
+        .status-card.green {
+            background: linear-gradient(135deg, #30D158 0%, #388e3c 100%);
+        }
+
+        .status-card h3 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .download-section {
+            text-align: center;
+            margin: 60px 0;
+        }
+
+        .download-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+            opacity: 0.9;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .install-code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .install-code code {
+            background: none;
+            color: #f8f8f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚦 Claude Code 红绿灯</h1>
+            <p class="subtitle">实时显示 Claude Code 工作状态的优雅菜单栏应用</p>
+
+            <div class="traffic-light-demo">
+                <div class="light red"></div>
+                <div class="light yellow"></div>
+                <div class="light green"></div>
+            </div>
+        </header>
+
+        <div class="content">
+            <h2 style="text-align: center; margin-bottom: 40px; color: #667eea;">智能状态指示</h2>
+
+            <div class="status-explanation">
+                <div class="status-card green">
+                    <h3>🟢 绿灯</h3>
+                    <p>Claude 已完成回复<br>可以继续对话</p>
+                </div>
+                <div class="status-card yellow">
+                    <h3>🟡 黄灯</h3>
+                    <p>Claude 正在思考<br>输出或处理中</p>
+                </div>
+                <div class="status-card red">
+                    <h3>🔴 红灯</h3>
+                    <p>会话中断<br>需要用户输入或网络问题</p>
+                </div>
+            </div>
+
+            <h2 style="text-align: center; margin: 60px 0 40px; color: #667eea;">功能特性</h2>
+
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">🎨</div>
+                    <h3>双模式显示</h3>
+                    <p>三灯模式（经典红绿灯）或单灯模式（极简风格），随心切换</p>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-icon">🌓</div>
+                    <h3>深色/浅色主题</h3>
+                    <p>自动适配系统外观，提供最佳视觉体验</p>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-icon">🔔</div>
+                    <h3>声音提示</h3>
+                    <p>状态切换时播放轻柔提示音，可一键静音</p>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-icon">📊</div>
+                    <h3>使用统计</h3>
+                    <p>记录每日红灯/绿灯次数和红灯总时长</p>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <h3>轻量高效</h3>
+                    <p>常驻菜单栏，资源占用极低</p>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-icon">🔧</div>
+                    <h3>自动配置</h3>
+                    <p>首次启动自动配置 Claude Code hooks</p>
+                </div>
+            </div>
+
+            <div class="download-section">
+                <h2 style="color: #667eea; margin-bottom: 20px;">立即下载</h2>
+                <p style="margin-bottom: 30px;">支持 macOS 和 Windows 平台</p>
+
+                <div class="download-buttons">
+                    <a href="https://github.com/TaylorSimery/claude-traffic-light/releases" class="btn btn-primary">
+                        📥 下载最新版本
+                    </a>
+                    <a href="https://github.com/TaylorSimery/claude-traffic-light" class="btn btn-secondary">
+                        💻 查看源码
+                    </a>
+                </div>
+            </div>
+
+            <h2 style="text-align: center; margin: 60px 0 30px; color: #667eea;">快速开始</h2>
+
+            <h3 style="margin: 30px 0 15px;">方式一：下载预编译版本</h3>
+            <ol style="margin-left: 20px; line-height: 2;">
+                <li>前往 <a href="https://github.com/TaylorSimery/claude-traffic-light/releases" style="color: #667eea;">Releases</a> 页面</li>
+                <li>下载最新的 <code>.dmg</code>（macOS）或 <code>.exe</code>（Windows）</li>
+                <li>安装并启动应用</li>
+            </ol>
+
+            <h3 style="margin: 30px 0 15px;">方式二：从源码构建</h3>
+            <div class="install-code">
+                <code># 克隆仓库<br>
+git clone https://github.com/TaylorSimery/claude-traffic-light.git<br>
+cd claude-traffic-light<br>
+<br>
+# 安装依赖<br>
+npm install<br>
+<br>
+# 开发模式运行<br>
+npm run dev<br>
+<br>
+# 打包 DMG（macOS）<br>
+npm run dist<br>
+<br>
+# 打包 NSIS（Windows）<br>
+npm run dist:win</code>
+            </div>
+
+            <h2 style="text-align: center; margin: 60px 0 30px; color: #667eea;">工作原理</h2>
+            <p style="text-align: center; max-width: 800px; margin: 0 auto;">
+                应用通过 Claude Code 的 hooks 系统监听关键事件：<br><br>
+                <strong>Start</strong> → 黄灯（Claude 开始输出）<br>
+                <strong>Stop</strong> → 绿灯（Claude 完成回复）<br>
+                <strong>AskUserQuestion</strong> → 红灯（需要用户选择）<br>
+                <strong>UserPromptSubmit</strong> → 黄灯（用户提交消息）<br><br>
+                首次启动时，应用会自动在 <code>~/.claude/settings.json</code> 中配置必要的 hooks。
+            </p>
+
+            <h2 style="text-align: center; margin: 60px 0 30px; color: #667eea;">系统要求</h2>
+            <div style="text-align: center;">
+                <p><strong>macOS:</strong> 10.13 或更高版本</p>
+                <p><strong>Windows:</strong> Windows 10 或更高版本</p>
+                <p><strong>Claude Code:</strong> 需要安装 Claude Code CLI 或桌面版</p>
+            </div>
+        </div>
+
+        <footer>
+            <p>Made with ❤️ for Claude Code users</p>
+            <p style="margin-top: 10px;">
+                <a href="https://github.com/TaylorSimery/claude-traffic-light" style="color: white; text-decoration: none;">
+                    GitHub
+                </a>
+                 ·
+                <a href="https://github.com/TaylorSimery/claude-traffic-light/issues" style="color: white; text-decoration: none;">
+                    Report Issues
+                </a>
+            </p>
+            <p style="margin-top: 20px; opacity: 0.7;">MIT License © 2025</p>
+        </footer>
+    </div>
+</body>
+</html>
