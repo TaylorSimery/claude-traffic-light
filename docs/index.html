@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Claude Traffic Light</title>
+  <meta name="description" content="A native macOS traffic light status app for Claude Code.">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #08090a;
+      --panel: #121417;
+      --text: #f5f7fa;
+      --muted: #aab2bd;
+      --yellow: #ffd247;
+      --green: #45f05a;
+      --red: #ff4034;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 20% 20%, #293036 0, transparent 28rem), var(--bg);
+      color: var(--text);
+    }
+    main {
+      width: min(1060px, calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 58px 0 72px;
+      display: grid;
+      grid-template-columns: minmax(260px, 420px) 1fr;
+      gap: 72px;
+      align-items: center;
+    }
+    h1 {
+      margin: 0 0 18px;
+      font-size: clamp(42px, 7vw, 82px);
+      line-height: 0.92;
+      letter-spacing: 0;
+    }
+    p {
+      margin: 0;
+      max-width: 600px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.65;
+    }
+    a {
+      color: var(--text);
+      text-decoration: none;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
+    .button {
+      height: 42px;
+      padding: 0 16px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 8px;
+      background: #f5f7fa;
+      color: #0b0d10;
+      font-weight: 700;
+    }
+    .button.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+    .device {
+      width: 214px;
+      height: 458px;
+      margin: 0 auto;
+      padding: 28px 0;
+      border-radius: 58px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.12), #050607 48%, #000);
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 34px 80px rgba(0,0,0,0.55);
+      display: grid;
+      place-items: center;
+    }
+    .lights {
+      display: grid;
+      gap: 28px;
+    }
+    .light {
+      width: 122px;
+      height: 122px;
+      border-radius: 50%;
+      border: 6px solid rgba(0,0,0,0.72);
+      background: radial-gradient(circle at 32% 24%, rgba(255,255,255,0.88), var(--color) 32%, rgba(0,0,0,0.86) 78%);
+      box-shadow: 0 0 48px color-mix(in srgb, var(--color), transparent 25%);
+    }
+    .light.red { --color: var(--red); opacity: 0.34; box-shadow: none; }
+    .light.yellow { --color: var(--yellow); }
+    .light.green { --color: var(--green); opacity: 0.34; box-shadow: none; }
+    section {
+      margin-top: 42px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    article {
+      padding: 18px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    article strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+    article span {
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    @media (max-width: 760px) {
+      main {
+        grid-template-columns: 1fr;
+        gap: 36px;
+        padding-top: 34px;
+      }
+      .visual { order: -1; }
+      .device {
+        width: 164px;
+        height: 352px;
+        border-radius: 46px;
+      }
+      .light {
+        width: 92px;
+        height: 92px;
+      }
+      section {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div>
+      <h1>Claude Traffic Light</h1>
+      <p>一个原生 macOS 状态灯。Claude Code 在终端里工作时，它会读取 hook 状态和会话日志，用红黄绿告诉你该不该切回来看。</p>
+      <div class="actions">
+        <a class="button" href="https://github.com/TaylorSimery/claude-traffic-light/releases">下载 App</a>
+        <a class="button secondary" href="https://github.com/TaylorSimery/claude-traffic-light">查看源码</a>
+      </div>
+      <section>
+        <article><strong>黄灯</strong><span>Claude 正在思考、流式输出或调用工具。</span></article>
+        <article><strong>绿灯</strong><span>上一轮已经干净结束，可以回来看了。</span></article>
+        <article><strong>红灯</strong><span>工具确认、运行出错或会话退出。</span></article>
+      </section>
+    </div>
+    <div class="visual" aria-hidden="true">
+      <div class="device">
+        <div class="lights">
+          <div class="light red"></div>
+          <div class="light yellow"></div>
+          <div class="light green"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
