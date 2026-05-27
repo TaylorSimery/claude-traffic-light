@@ -1,97 +1,118 @@
 # Claude Traffic Light
 
-[中文](README.md) · **English**
+Claude Traffic Light is a tiny macOS widget for Claude Code.
 
-A floating, matte-black traffic light widget for macOS that mirrors the live state of [Claude Code](https://claude.com/claude-code) on your desktop.
+It sits on the desktop like a signal lamp and tells you, at a glance, whether Claude is thinking, done, or needs attention.
 
-<p align="center">
-  <img src="docs/assets/icon.png" width="180" alt="Claude Traffic Light" />
-</p>
+## Status colors
 
-<p align="center">
-  <a href="https://taylorsimery.github.io/claude-traffic-light/">Website</a>
-  ·
-  <a href="https://github.com/TaylorSimery/claude-traffic-light/releases">Download</a>
-  ·
-  <a href="#getting-started">Getting started</a>
-</p>
-
-## Why
-
-Claude Code runs in a terminal, so it is easy to lose track of what it is doing while you switch away. Claude Traffic Light reads its session log and shows a single, glanceable signal:
-
-- **Yellow** — Claude is thinking, streaming, or executing a tool.
-- **Green** — the last turn ended cleanly.
-- **Red** — a tool is waiting for permission, the run errored, or the process died.
+- Yellow: Claude is thinking, streaming, or using a tool.
+- Green: the last turn ended cleanly.
+- Red: Claude Code is not running, is waiting for permission, or has hit an error.
 
 ## Features
 
-- Native SwiftUI widget. No Electron, no Python, no helper scripts.
-- Matte-black panel that floats above other windows on every Space, including full-screen apps.
-- Drag from anywhere on the panel. Right-click to quit.
-- No menu bar item, no Dock icon — set as a `LSUIElement` background app.
-- Reads `~/.claude/projects/**/*.jsonl` directly. No network, no telemetry.
-- Universal binary, runs locally-signed on Apple Silicon and Intel from macOS 13.
+- Pure SwiftUI app.
+- No Electron.
+- No Python.
+- No helper scripts inside the app.
+- No Dock icon.
+- No menu bar icon.
+- Borderless widget window.
+- Floats above normal windows and full-screen spaces.
+- Drag from anywhere.
+- Right-click to quit.
 
-## Getting started
+## Install
 
-### Download the prebuilt app
+### 1. Download the release
 
-1. Grab `ClaudeTrafficLight.zip` from the [latest release](https://github.com/TaylorSimery/claude-traffic-light/releases).
-2. Unzip and drop `ClaudeTrafficLight.app` into `/Applications`.
-3. The app is ad-hoc signed. The first launch needs a right-click → **Open**, or run once:
-   ```bash
-   xattr -dr com.apple.quarantine /Applications/ClaudeTrafficLight.app
-   ```
-4. Launch. The widget appears in the upper-right corner of your main display.
+Download `ClaudeTrafficLight.zip` from GitHub Releases and unzip it.
 
-### Build from source
+### 2. Move the app
 
-Requires Xcode 15+ and macOS 13+.
+Drag `ClaudeTrafficLight.app` into `/Applications`.
 
-```bash
-git clone https://github.com/TaylorSimery/claude-traffic-light.git
-cd claude-traffic-light
+### 3. Open it once
+
+The first launch may need:
+
+- right-click the app and choose **Open**
+- or remove quarantine from Terminal:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/ClaudeTrafficLight.app
+```
+
+### 4. Launch the widget
+
+The mini traffic light appears near the top-right of the screen.
+
+If Claude Code is not running, the light is red.
+
+## Usage
+
+- Start Claude Code in Terminal.
+- Keep working elsewhere.
+- Glance at the widget when you want a status check.
+- Yellow means Claude is still active.
+- Green means the last turn completed cleanly.
+- Red means something needs attention, or Claude Code is not running.
+
+## If the widget stays red
+
+1. Make sure Claude Code is running in Terminal.
+2. Run at least one prompt in that session.
+3. Confirm Claude Code is writing transcripts under `~/.claude/projects`.
+4. Relaunch the app after Claude Code starts if needed.
+
+## Build from source
+
+Requirements:
+
+- macOS 13 or later
+- Xcode 26+
+
+Open the project:
+
+```sh
 open ClaudeTrafficLight.xcodeproj
 ```
 
-Hit **⌘R** to run, or build a Release `.app`:
+Build a Release app:
 
-```bash
-xcodebuild -project ClaudeTrafficLight.xcodeproj \
-           -scheme ClaudeTrafficLight \
-           -configuration Release \
-           -derivedDataPath build clean build
-open build/Build/Products/Release/ClaudeTrafficLight.app
+```sh
+xcodebuild -project ClaudeTrafficLight.xcodeproj -scheme ClaudeTrafficLight -configuration Release -derivedDataPath build/DerivedData build
 ```
 
-## How it detects status
+The app bundle is written to:
 
-Claude Code writes one JSON object per line to `~/.claude/projects/<project>/<session>.jsonl` while it works. The widget polls the newest of those files once a second and looks at:
-
-- The `stop_reason` and `content` of the last message.
-- Whether the newest transcript ends in a clean assistant turn, a tool request, or a permission/error state.
-
-From those it picks one of `running`, `success`, or `error`. The full mapping lives in `StatusMonitor.swift`.
-
-## Project layout
-
-```
-ClaudeTrafficLight/
-  ClaudeTrafficLightApp.swift    App entry point + window setup
-  AppDelegate.swift              Borderless, always-on-top NSPanel
-  TrafficLightView.swift         SwiftUI light + matte-black panel
-  StatusMonitor.swift            Polls Claude Code session logs
-  Assets.xcassets/AppIcon        Multi-resolution app icon
-  Info.plist                     LSUIElement, bundle metadata
-ClaudeTrafficLight.xcodeproj/    Plain Xcode project, no SPM, no pods
-docs/                            GitHub Pages landing page
+```sh
+build/DerivedData/Build/Products/Release/ClaudeTrafficLight.app
 ```
 
-## License
+## FAQ
 
-MIT. See [LICENSE](LICENSE).
+### Why no Dock icon?
 
-## Credits
+The app is an `LSUIElement` background app, so it behaves like a widget instead of a normal windowed app.
 
-Built with SwiftUI. Icon and visual language designed for [Claude Code](https://claude.com/claude-code) by Anthropic.
+### How do I quit?
+
+Right-click the widget and choose the quit item in the menu.
+
+### Can I move it?
+
+Yes. Drag from any empty part of the widget.
+
+### Does it need hooks or scripts?
+
+No. The current version reads Claude Code transcripts directly.
+
+### Why is it red when Claude Code is closed?
+
+That is intentional. When Claude Code is not running, the widget should show red.
+
+## Website
+
+The project site lives in `docs/` and is published with GitHub Pages.

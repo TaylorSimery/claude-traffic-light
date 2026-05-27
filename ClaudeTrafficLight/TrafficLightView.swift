@@ -19,7 +19,7 @@ struct TrafficLightView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.white.opacity(0.18),
+                            Color.white.opacity(0.10),
                             Color(red: 0.035, green: 0.038, blue: 0.043).opacity(0.94),
                             Color.black
                         ],
@@ -27,15 +27,6 @@ struct TrafficLightView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.16), lineWidth: 0.8)
-                }
-                .background {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                        .opacity(0.42)
-                }
                 .shadow(color: .black.opacity(0.55), radius: 15, y: 8)
 
             VStack(spacing: 10) {

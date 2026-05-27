@@ -17,7 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func createWidgetPanel() {
-        let size = NSSize(width: 82, height: 178)
+        let size = NSSize(width: 72, height: 164)
         let visibleFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
         let origin = NSPoint(
             x: visibleFrame.maxX - size.width - 28,

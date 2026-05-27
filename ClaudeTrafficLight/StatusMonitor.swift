@@ -107,12 +107,64 @@ final class StatusMonitor: ObservableObject {
     }
 
     func refresh() {
+        guard isClaudeCodeRunning() else {
+            snapshot = StatusSnapshot(
+                state: .error,
+                updatedAt: Date(),
+                source: "Claude Code 未运行",
+                transcriptPath: nil,
+                rawValue: "process_not_running"
+            )
+            return
+        }
+
         if let logSnapshot = readLatestLogStatus() {
             snapshot = logSnapshot
             return
         }
 
-        snapshot = StatusSnapshot(state: .idle, updatedAt: Date(), source: "未找到 Claude 状态", transcriptPath: nil, rawValue: nil)
+        snapshot = StatusSnapshot(
+            state: .running,
+            updatedAt: Date(),
+            source: "Claude Code 运行中",
+            transcriptPath: nil,
+            rawValue: "process_running"
+        )
+    }
+
+    private func isClaudeCodeRunning() -> Bool {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
+        process.arguments = ["-fl", "(^|[/[:space:]])claude($|[[:space:]-])|claude-code"]
+
+        let output = Pipe()
+        process.standardOutput = output
+        process.standardError = Pipe()
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+        } catch {
+            return false
+        }
+
+        guard process.terminationStatus == 0 else {
+            return false
+        }
+
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        guard let text = String(data: data, encoding: .utf8) else {
+            return false
+        }
+
+        return text
+            .split(separator: "\n")
+            .map { $0.lowercased() }
+            .contains { line in
+                !line.contains("claudetrafficlight")
+                    && !line.contains("claude-traffic-light")
+                    && !line.contains("pgrep")
+            }
     }
 
     private func readLatestLogStatus() -> StatusSnapshot? {

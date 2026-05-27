@@ -4,166 +4,349 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Claude Traffic Light</title>
-  <meta name="description" content="A native macOS traffic light status app for Claude Code.">
+  <meta name="description" content="A tiny native macOS traffic light widget for Claude Code.">
   <style>
     :root {
       color-scheme: dark;
-      --bg: #08090a;
-      --panel: #121417;
-      --text: #f5f7fa;
-      --muted: #aab2bd;
-      --yellow: #ffd247;
-      --green: #45f05a;
-      --red: #ff4034;
+      --bg: #07080b;
+      --panel: #101319;
+      --panel-2: #151922;
+      --line: rgba(255,255,255,.11);
+      --text: #f6f7fb;
+      --muted: #a8b0bf;
+      --red: #ff4338;
+      --yellow: #ffd34d;
+      --green: #3feb64;
+      --blue: #72d7ff;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      min-height: 100vh;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at 20% 20%, #293036 0, transparent 28rem), var(--bg);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 18% 10%, rgba(114,215,255,.18), transparent 30rem),
+        radial-gradient(circle at 85% 8%, rgba(255,211,77,.14), transparent 28rem),
+        linear-gradient(180deg, #0a0d13 0%, var(--bg) 42%, #090a0d 100%);
       color: var(--text);
     }
-    main {
-      width: min(1060px, calc(100vw - 40px));
-      margin: 0 auto;
-      padding: 58px 0 72px;
-      display: grid;
-      grid-template-columns: minmax(260px, 420px) 1fr;
-      gap: 72px;
-      align-items: center;
+    a { color: inherit; text-decoration: none; }
+    .wrap { width: min(1120px, calc(100vw - 40px)); margin: 0 auto; }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(7,8,11,.74);
+      backdrop-filter: blur(18px);
     }
-    h1 {
-      margin: 0 0 18px;
-      font-size: clamp(42px, 7vw, 82px);
-      line-height: 0.92;
-      letter-spacing: 0;
-    }
-    p {
-      margin: 0;
-      max-width: 600px;
-      color: var(--muted);
-      font-size: 18px;
-      line-height: 1.65;
-    }
-    a {
-      color: var(--text);
-      text-decoration: none;
-    }
-    .actions {
+    nav {
+      height: 64px;
       display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 30px;
+      align-items: center;
+      justify-content: space-between;
     }
-    .button {
-      height: 42px;
-      padding: 0 16px;
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; }
+    .brand img { width: 34px; height: 34px; border-radius: 9px; }
+    .navlinks { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; }
+    .navlinks a { padding: 8px 10px; border-radius: 8px; }
+    .navlinks a:hover { background: rgba(255,255,255,.07); color: var(--text); }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 56px;
+      align-items: center;
+      padding: 82px 0 54px;
+    }
+    .eyebrow {
       display: inline-flex;
       align-items: center;
-      border-radius: 8px;
-      background: #f5f7fa;
-      color: #0b0d10;
+      gap: 8px;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,.05);
+      font-size: 13px;
       font-weight: 700;
+    }
+    h1 {
+      margin: 22px 0 18px;
+      max-width: 760px;
+      font-size: clamp(46px, 7vw, 86px);
+      line-height: .94;
+      letter-spacing: 0;
+    }
+    .lead {
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 19px;
+      line-height: 1.75;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+    .button {
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 17px;
+      border-radius: 8px;
+      background: var(--text);
+      color: #0b0d12;
+      font-weight: 800;
     }
     .button.secondary {
       background: transparent;
       color: var(--text);
-      border: 1px solid rgba(255,255,255,0.18);
+      border: 1px solid var(--line);
     }
-    .device {
-      width: 214px;
-      height: 458px;
+    .showcase {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 18px;
+      align-items: center;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
+      box-shadow: 0 30px 90px rgba(0,0,0,.38);
+    }
+    .widget {
+      width: 72px;
+      height: 164px;
       margin: 0 auto;
-      padding: 28px 0;
-      border-radius: 58px;
-      background: linear-gradient(145deg, rgba(255,255,255,0.12), #050607 48%, #000);
-      border: 1px solid rgba(255,255,255,0.12);
-      box-shadow: 0 34px 80px rgba(0,0,0,0.55);
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgba(255,255,255,.10), #080a0e 44%, #000);
       display: grid;
       place-items: center;
+      box-shadow: 0 22px 50px rgba(0,0,0,.52);
     }
-    .lights {
-      display: grid;
-      gap: 28px;
-    }
+    .lights { display: grid; gap: 10px; }
     .light {
-      width: 122px;
-      height: 122px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
-      border: 6px solid rgba(0,0,0,0.72);
-      background: radial-gradient(circle at 32% 24%, rgba(255,255,255,0.88), var(--color) 32%, rgba(0,0,0,0.86) 78%);
-      box-shadow: 0 0 48px color-mix(in srgb, var(--color), transparent 25%);
+      border: 2.4px solid rgba(0,0,0,.82);
+      background: radial-gradient(circle at 34% 28%, rgba(255,255,255,.78), var(--c) 38%, rgba(0,0,0,.83) 82%);
+      opacity: .28;
     }
-    .light.red { --color: var(--red); opacity: 0.34; box-shadow: none; }
-    .light.yellow { --color: var(--yellow); }
-    .light.green { --color: var(--green); opacity: 0.34; box-shadow: none; }
-    section {
-      margin-top: 42px;
+    .light.active { opacity: 1; box-shadow: 0 0 28px color-mix(in srgb, var(--c), transparent 20%); }
+    .red { --c: var(--red); }
+    .yellow { --c: var(--yellow); }
+    .green { --c: var(--green); }
+    .terminal {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #080a0f;
+      overflow: hidden;
+    }
+    .terminal .bar {
+      height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--red); }
+    .dot:nth-child(2) { background: var(--yellow); }
+    .dot:nth-child(3) { background: var(--green); }
+    pre {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+      color: #dfe7f6;
+      font: 13px/1.7 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    section { padding: 38px 0; }
+    .section-head { margin-bottom: 18px; }
+    h2 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 44px); letter-spacing: 0; }
+    .muted { color: var(--muted); line-height: 1.7; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035));
+      padding: 18px;
+    }
+    .card h3 { margin: 0 0 8px; font-size: 17px; }
+    .card p { margin: 0; color: var(--muted); line-height: 1.65; }
+    .steps {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .step strong {
+      display: inline-flex;
+      width: 28px;
+      height: 28px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      background: rgba(114,215,255,.14);
+      color: var(--blue);
+    }
+    .status {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 14px;
     }
-    article {
-      padding: 18px;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.10);
+    .status .card { min-height: 146px; }
+    .status-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-weight: 900;
     }
-    article strong {
-      display: block;
-      margin-bottom: 8px;
+    .lamp {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--c);
+      box-shadow: 0 0 24px var(--c);
     }
-    article span {
+    .faq {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    footer {
+      padding: 46px 0 70px;
       color: var(--muted);
-      line-height: 1.55;
+      border-top: 1px solid rgba(255,255,255,.08);
     }
-    @media (max-width: 760px) {
-      main {
-        grid-template-columns: 1fr;
-        gap: 36px;
-        padding-top: 34px;
-      }
-      .visual { order: -1; }
-      .device {
-        width: 164px;
-        height: 352px;
-        border-radius: 46px;
-      }
-      .light {
-        width: 92px;
-        height: 92px;
-      }
-      section {
-        grid-template-columns: 1fr;
-      }
+    @media (max-width: 860px) {
+      .hero, .showcase, .steps, .faq { grid-template-columns: 1fr; }
+      .grid, .status { grid-template-columns: 1fr; }
+      .navlinks { display: none; }
+      .hero { padding-top: 44px; }
     }
   </style>
 </head>
 <body>
-  <main>
-    <div>
-      <h1>Claude Traffic Light</h1>
-      <p>一个原生 macOS 状态灯。Claude Code 在终端里工作时，它会直接读取会话日志，用红黄绿告诉你该不该切回来看。</p>
-      <div class="actions">
-        <a class="button" href="https://github.com/TaylorSimery/claude-traffic-light/releases">下载 App</a>
-        <a class="button secondary" href="https://github.com/TaylorSimery/claude-traffic-light">查看源码</a>
+  <header>
+    <nav class="wrap">
+      <a class="brand" href="#">
+        <img src="traffic-light-icon.png" alt="">
+        <span>Claude Traffic Light</span>
+      </a>
+      <div class="navlinks">
+        <a href="#install">安装</a>
+        <a href="#status">状态</a>
+        <a href="#faq">FAQ</a>
+        <a href="https://github.com/TaylorSimery/claude-traffic-light">GitHub</a>
       </div>
-      <section>
-        <article><strong>黄灯</strong><span>Claude 正在思考、流式输出或调用工具。</span></article>
-        <article><strong>绿灯</strong><span>上一轮已经干净结束，可以回来看了。</span></article>
-        <article><strong>红灯</strong><span>工具确认、运行出错或会话退出。</span></article>
-      </section>
-    </div>
-    <div class="visual" aria-hidden="true">
-      <div class="device">
-        <div class="lights">
-          <div class="light red"></div>
-          <div class="light yellow"></div>
-          <div class="light green"></div>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div>
+        <span class="eyebrow">Native macOS widget for Claude Code</span>
+        <h1>让 Claude Code 的状态浮在桌面上。</h1>
+        <p class="lead">Claude 在终端里忙的时候，你不用一直切回去看。这个迷你信号灯会悬浮在所有窗口和全屏 Space 之上，用红黄绿告诉你该继续等、可以回看，还是需要处理。</p>
+        <div class="actions">
+          <a class="button" href="https://github.com/TaylorSimery/claude-traffic-light/releases">下载最新版</a>
+          <a class="button secondary" href="https://github.com/TaylorSimery/claude-traffic-light">查看源码</a>
         </div>
       </div>
-    </div>
+      <div class="showcase">
+        <div class="widget" aria-hidden="true">
+          <div class="lights">
+            <div class="light red"></div>
+            <div class="light yellow active"></div>
+            <div class="light green"></div>
+          </div>
+        </div>
+        <div class="terminal">
+          <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span>install</span></div>
+          <pre>1. 解压 ClaudeTrafficLight.zip
+2. 拖进 /Applications
+3. 右键 Open 第一次启动
+4. 运行 claude
+5. 看桌面信号灯</pre>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>小到不打扰，亮到一眼懂</h2>
+        <p class="muted">它不是一个需要管理的窗口，而是一个安静的桌面挂件。</p>
+      </div>
+      <div class="grid">
+        <article class="card"><h3>原生 SwiftUI</h3><p>没有 Electron、没有 Python、没有辅助脚本。安装后就是一个普通 macOS App。</p></article>
+        <article class="card"><h3>真正像挂件</h3><p>无 Dock 图标、无菜单栏图标、无标题栏按钮。右键退出，拖动即可换位置。</p></article>
+        <article class="card"><h3>覆盖所有工作区</h3><p>窗口级别高于普通 App，并加入所有 Space，包括全屏应用。</p></article>
+      </div>
+    </section>
+
+    <section id="status">
+      <div class="section-head">
+        <h2>三个灯号</h2>
+        <p class="muted">状态足够少，才适合一眼扫过。</p>
+      </div>
+      <div class="status">
+        <article class="card">
+          <div class="status-line"><span class="lamp yellow"></span>黄灯</div>
+          <p>Claude 正在思考、流式输出，或者正在调用工具。先别切回去盯着终端。</p>
+        </article>
+        <article class="card">
+          <div class="status-line"><span class="lamp green"></span>绿灯</div>
+          <p>上一轮已经干净结束。现在回到终端，通常就能直接看结果。</p>
+        </article>
+        <article class="card">
+          <div class="status-line"><span class="lamp red"></span>红灯</div>
+          <p>Claude Code 没运行、权限确认在等你、工具出错，或者进程已经退出。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="install">
+      <div class="section-head">
+        <h2>安装教程</h2>
+        <p class="muted">按这几步走，不需要配置 hooks，也不需要改 Claude Code 设置。</p>
+      </div>
+      <div class="steps">
+        <article class="card step"><strong>1</strong><h3>下载并解压</h3><p>从 GitHub Releases 下载 `ClaudeTrafficLight.zip`，双击解压得到 `ClaudeTrafficLight.app`。</p></article>
+        <article class="card step"><strong>2</strong><h3>放进应用程序</h3><p>把 App 拖到 `/Applications`。这样 Spotlight、启动台和登录项都能正常找到它。</p></article>
+        <article class="card step"><strong>3</strong><h3>第一次右键打开</h3><p>如果 macOS 提示无法验证开发者，右键 App 选择 Open。也可以运行 `xattr -dr com.apple.quarantine /Applications/ClaudeTrafficLight.app`。</p></article>
+        <article class="card step"><strong>4</strong><h3>启动 Claude Code</h3><p>在终端运行 `claude` 并提交一次 prompt。信号灯会读取 `~/.claude/projects` 下的会话日志。</p></article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>工作原理</h2>
+        <p class="muted">App 每秒做两件事：检查 Claude Code 进程是否存在，读取最新 transcript 的最后状态。</p>
+      </div>
+      <div class="terminal">
+        <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span>status mapping</span></div>
+        <pre>no claude process          -> red
+tool use / user prompt     -> yellow
+clean assistant end turn   -> green
+permission / hook failure  -> red</pre>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="section-head">
+        <h2>常见问题</h2>
+      </div>
+      <div class="faq">
+        <article class="card"><h3>为什么没有 Dock 图标？</h3><p>这是设计目标。它以 LSUIElement 后台应用运行，更像桌面挂件，而不是普通窗口。</p></article>
+        <article class="card"><h3>怎么退出？</h3><p>右键点击信号灯，选择退出。如果找不到它，也可以在活动监视器里结束 ClaudeTrafficLight。</p></article>
+        <article class="card"><h3>一直红灯怎么办？</h3><p>先确认终端里真的运行了 Claude Code。然后提交一次 prompt，确保 `~/.claude/projects` 里有新的 JSONL 日志。</p></article>
+        <article class="card"><h3>会上传数据吗？</h3><p>不会。它只在本机读取 Claude Code 的日志和进程状态，没有网络请求，也没有遥测。</p></article>
+      </div>
+    </section>
   </main>
+
+  <footer>
+    <div class="wrap">Claude Traffic Light. Built with SwiftUI for macOS.</div>
+  </footer>
 </body>
 </html>
