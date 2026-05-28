@@ -1,376 +1,869 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claude Code 红绿灯 - Traffic Light</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Claude Traffic Light 是一个常驻菜单栏的 Claude Code 状态指示器，用红、黄、绿三种状态显示 AI 当前是否正在工作、等待或需要处理。"
+    />
+    <title>Claude Traffic Light</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+      :root {
+        color-scheme: light;
+        --ink: #17202a;
+        --muted: #5f6f7f;
+        --line: #dbe3ea;
+        --panel: #ffffff;
+        --soft: #f4f7fa;
+        --blue: #1f6feb;
+        --green: #119c66;
+        --orange: #f48b24;
+        --red: #ff3b30;
+        --yellow: #ff9f0a;
+        --shadow: 0 24px 70px rgba(18, 31, 45, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(31, 111, 235, 0.1), transparent 34rem),
+          radial-gradient(circle at 84% 18%, rgba(17, 156, 102, 0.1), transparent 28rem),
+          linear-gradient(180deg, #fbfdff 0%, #f6f9fc 48%, #ffffff 100%);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      }
+
+      .shell {
+        width: min(1120px, calc(100% - 40px));
+        margin: 0 auto;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid rgba(219, 227, 234, 0.8);
+        background: rgba(251, 253, 255, 0.78);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav {
+        display: flex;
+        min-height: 72px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 760;
+        letter-spacing: 0;
+      }
+
+      .mark {
+        display: grid;
+        width: 36px;
+        height: 36px;
+        place-items: center;
+        border-radius: 10px;
+        color: white;
+        background: linear-gradient(135deg, var(--red), var(--yellow) 45%, var(--green));
+        box-shadow: 0 10px 28px rgba(31, 111, 235, 0.18);
+      }
+
+      .links {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .links a:hover {
+        color: var(--ink);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.03fr) minmax(320px, 0.97fr);
+        gap: 56px;
+        align-items: center;
+        min-height: calc(100vh - 72px);
+        min-height: calc(100svh - 72px);
+        padding: 82px 0 76px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 20px;
+        color: var(--green);
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .eyebrow::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--green);
+        box-shadow: 0 0 0 6px rgba(17, 156, 102, 0.1);
+      }
+
+      h1 {
+        max-width: 760px;
+        margin: 0;
+        font-size: clamp(42px, 7vw, 82px);
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .lead {
+        max-width: 680px;
+        margin: 28px 0 0;
+        color: var(--muted);
+        font-size: clamp(18px, 2.2vw, 22px);
+        line-height: 1.65;
+      }
+
+      .install {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        max-width: 650px;
+        margin-top: 36px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 18px 50px rgba(18, 31, 45, 0.08);
+      }
+
+      .install code {
+        display: block;
+        min-width: 0;
+        overflow-x: auto;
+        padding: 12px 14px;
+        color: #102131;
+        font-size: 15px;
+        white-space: nowrap;
+      }
+
+      .copy {
+        display: inline-flex;
+        width: 112px;
+        height: 46px;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 12px;
+        color: white;
+        background: var(--blue);
+        cursor: pointer;
+      }
+
+      .copy:hover {
+        background: #185ecb;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .button {
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        padding: 0 16px;
+        font-weight: 720;
+      }
+
+      .button.primary {
+        color: white;
+        background: var(--ink);
+      }
+
+      .button.secondary {
+        border: 1px solid var(--line);
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.74);
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .meta span {
+        padding: 8px 12px;
+        border: 1px solid rgba(219, 227, 234, 0.9);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .visual {
+        position: relative;
+        min-height: 480px;
+      }
+
+      .console {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(219, 227, 234, 0.92);
+        border-radius: 18px;
+        background: #0f1720;
+        box-shadow: var(--shadow);
+      }
+
+      .console::before {
+        content: "";
+        display: block;
+        height: 42px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background:
+          radial-gradient(circle at 22px 21px, #ff6b5f 0 5px, transparent 6px),
+          radial-gradient(circle at 42px 21px, #f5bd4f 0 5px, transparent 6px),
+          radial-gradient(circle at 62px 21px, #58c96f 0 5px, transparent 6px),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+      }
+
+      .console-body {
+        padding: 26px;
+        color: #d9e7f5;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 13px;
+        line-height: 1.75;
+      }
+
+      .line {
+        display: block;
+        white-space: pre-wrap;
+      }
+
+      .prompt {
+        color: #82d9b5;
+      }
+
+      .dim {
+        color: #8fa2b7;
+      }
+
+      .json-key {
+        color: #89c2ff;
+      }
+
+      .json-value {
+        color: #ffcf8a;
+      }
+
+      .device-card {
+        position: absolute;
+        right: -8px;
+        bottom: 0;
+        width: min(350px, 82%);
+        padding: 20px;
+        border: 1px solid rgba(219, 227, 234, 0.94);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 22px 55px rgba(18, 31, 45, 0.16);
+      }
+
+      .device-card h2 {
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+
+      .traffic-body {
+        display: grid;
+        width: 94px;
+        margin: 0 auto 18px;
+        gap: 12px;
+        justify-items: center;
+        border: 1px solid rgba(23, 32, 42, 0.1);
+        border-radius: 24px;
+        padding: 16px 0;
+        background: linear-gradient(180deg, #3a3a3c 0%, #242528 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+      }
+
+      .traffic-dot {
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        background: #20242a;
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.55);
+      }
+
+      .traffic-dot.red {
+        background: radial-gradient(circle at 36% 32%, #ff8b82, var(--red) 48%, #992019);
+        box-shadow: 0 0 22px rgba(255, 59, 48, 0.55), inset 0 1px 2px rgba(255, 255, 255, 0.28);
+      }
+
+      .traffic-dot.yellow {
+        background: radial-gradient(circle at 36% 32%, #ffd27a, var(--yellow) 50%, #a55f00);
+        box-shadow: 0 0 22px rgba(255, 159, 10, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.28);
+      }
+
+      .traffic-dot.green {
+        background: radial-gradient(circle at 36% 32%, #8cffaa, #30d158 50%, #14752d);
+        box-shadow: 0 0 22px rgba(48, 209, 88, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.28);
+      }
+
+      .flow {
+        display: grid;
+        gap: 12px;
+      }
+
+      .flow-item {
+        display: grid;
+        grid-template-columns: 30px minmax(0, 1fr);
+        gap: 12px;
+        align-items: start;
+      }
+
+      .flow-index {
+        display: grid;
+        width: 30px;
+        height: 30px;
+        place-items: center;
+        border-radius: 999px;
+        color: white;
+        background: var(--green);
+        font-size: 13px;
+        font-weight: 760;
+      }
+
+      .flow-title {
+        margin: 0 0 3px;
+        font-weight: 720;
+      }
+
+      .flow-copy {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      section {
+        padding: 72px 0;
+      }
+
+      .section-head {
+        max-width: 760px;
+        margin-bottom: 30px;
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: clamp(30px, 4vw, 48px);
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      .section-head p {
+        margin: 16px 0 0;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.65;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .feature {
+        min-height: 220px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--panel);
+        box-shadow: 0 10px 34px rgba(18, 31, 45, 0.06);
+      }
+
+      .feature .icon {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        margin-bottom: 24px;
+        place-items: center;
+        border-radius: 12px;
+        color: white;
+        background: var(--ink);
+        font-weight: 800;
+      }
+
+      .feature:nth-child(2) .icon,
+      .feature:nth-child(5) .icon {
+        background: var(--blue);
+      }
+
+      .feature:nth-child(3) .icon,
+      .feature:nth-child(6) .icon {
+        background: var(--orange);
+      }
+
+      .feature h3 {
+        margin: 0 0 10px;
+        font-size: 20px;
+        letter-spacing: 0;
+      }
+
+      .feature p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .steps,
+      .states {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .step {
+        padding: 24px;
+        border-top: 3px solid var(--blue);
+        background: var(--soft);
+      }
+
+      .step:nth-child(2) {
+        border-color: var(--green);
+      }
+
+      .step:nth-child(3) {
+        border-color: var(--orange);
+      }
+
+      .step strong,
+      .state strong {
+        display: block;
+        margin-bottom: 12px;
+        font-size: 18px;
+      }
+
+      .step p,
+      .state p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .state {
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: white;
+      }
+
+      .state-marker {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        margin-right: 8px;
+        border-radius: 999px;
+        vertical-align: 1px;
+      }
+
+      .state-marker.green {
+        background: #30d158;
+        box-shadow: 0 0 0 6px rgba(48, 209, 88, 0.1);
+      }
+
+      .state-marker.yellow {
+        background: var(--yellow);
+        box-shadow: 0 0 0 6px rgba(255, 159, 10, 0.1);
+      }
+
+      .state-marker.red {
+        background: var(--red);
+        box-shadow: 0 0 0 6px rgba(255, 59, 48, 0.1);
+      }
+
+      .command-list {
+        display: grid;
+        gap: 12px;
+        max-width: 920px;
+      }
+
+      .command {
+        display: grid;
+        grid-template-columns: 190px minmax(0, 1fr);
+        gap: 16px;
+        align-items: center;
+        padding: 18px 20px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: white;
+      }
+
+      .command span {
+        color: var(--muted);
+        font-weight: 680;
+      }
+
+      .command code {
+        overflow-x: auto;
+        color: #102131;
+        font-size: 14px;
+        white-space: nowrap;
+      }
+
+      .footer {
+        padding: 36px 0 46px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .footer .shell {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      @media (max-width: 880px) {
+        .links {
+          display: none;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #333;
-            line-height: 1.6;
-            min-height: 100vh;
+        .hero {
+          grid-template-columns: 1fr;
+          min-height: auto;
+          padding-top: 58px;
+          gap: 42px;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+        .visual {
+          min-height: 450px;
         }
 
-        header {
-            text-align: center;
-            padding: 60px 20px;
-            color: white;
+        .grid,
+        .steps,
+        .states {
+          grid-template-columns: 1fr;
         }
 
-        h1 {
-            font-size: 3.5em;
-            margin-bottom: 20px;
-            font-weight: 700;
+        .command {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .shell {
+          width: min(100% - 28px, 1120px);
         }
 
-        .subtitle {
-            font-size: 1.3em;
-            opacity: 0.95;
-            margin-bottom: 40px;
+        .install {
+          grid-template-columns: 1fr;
         }
 
-        .traffic-light-demo {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin: 40px 0;
+        .copy {
+          width: 100%;
         }
 
-        .light {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-            animation: pulse 2s ease-in-out infinite;
+        .console-body {
+          padding: 20px;
+          font-size: 12px;
         }
 
-        .light.red {
-            background: #FF3B30;
-            box-shadow: 0 0 40px rgba(255,59,48,0.6);
-            animation-delay: 0s;
+        .device-card {
+          position: relative;
+          right: auto;
+          bottom: auto;
+          width: 100%;
+          margin-top: 14px;
         }
 
-        .light.yellow {
-            background: #FF9F0A;
-            box-shadow: 0 0 40px rgba(255,159,10,0.6);
-            animation-delay: 0.7s;
+        .visual {
+          min-height: auto;
         }
 
-        .light.green {
-            background: #30D158;
-            box-shadow: 0 0 40px rgba(48,209,88,0.6);
-            animation-delay: 1.4s;
+        .footer .shell {
+          flex-direction: column;
         }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 1; }
-        }
-
-        .content {
-            background: white;
-            border-radius: 20px;
-            padding: 60px;
-            margin: 40px 0;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-        }
-
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-            margin: 40px 0;
-        }
-
-        .feature {
-            padding: 30px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .feature:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .feature-icon {
-            font-size: 3em;
-            margin-bottom: 15px;
-        }
-
-        .feature h3 {
-            font-size: 1.5em;
-            margin-bottom: 10px;
-            color: #667eea;
-        }
-
-        .status-explanation {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 25px;
-            margin: 40px 0;
-        }
-
-        .status-card {
-            padding: 25px;
-            border-radius: 15px;
-            color: white;
-            text-align: center;
-        }
-
-        .status-card.red {
-            background: linear-gradient(135deg, #FF3B30 0%, #d32f2f 100%);
-        }
-
-        .status-card.yellow {
-            background: linear-gradient(135deg, #FF9F0A 0%, #f57c00 100%);
-        }
-
-        .status-card.green {
-            background: linear-gradient(135deg, #30D158 0%, #388e3c 100%);
-        }
-
-        .status-card h3 {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-
-        .download-section {
-            text-align: center;
-            margin: 60px 0;
-        }
-
-        .download-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-top: 30px;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 15px 40px;
-            font-size: 1.1em;
-            font-weight: 600;
-            text-decoration: none;
-            border-radius: 50px;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-
-        .btn-secondary {
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-        }
-
-        .btn-secondary:hover {
-            background: #667eea;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        footer {
-            text-align: center;
-            padding: 40px 20px;
-            color: white;
-            opacity: 0.9;
-        }
-
-        code {
-            background: #f4f4f4;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 0.9em;
-        }
-
-        .install-code {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 20px;
-            border-radius: 10px;
-            overflow-x: auto;
-            margin: 20px 0;
-        }
-
-        .install-code code {
-            background: none;
-            color: #f8f8f2;
-        }
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>🚦 Claude Code 红绿灯</h1>
-            <p class="subtitle">实时显示 Claude Code 工作状态的优雅菜单栏应用</p>
+  </head>
+  <body>
+    <header class="topbar">
+      <nav class="shell nav" aria-label="主导航">
+        <a class="brand" href="#top" aria-label="Claude Traffic Light 首页">
+          <span class="mark" aria-hidden="true">C</span>
+          <span>Claude Traffic Light</span>
+        </a>
+        <div class="links">
+          <a href="#features">功能</a>
+          <a href="#workflow">流程</a>
+          <a href="#states">状态</a>
+          <a href="https://github.com/TaylorSimery/claude-traffic-light">GitHub</a>
+        </div>
+      </nav>
+    </header>
 
-            <div class="traffic-light-demo">
-                <div class="light red"></div>
-                <div class="light yellow"></div>
-                <div class="light green"></div>
-            </div>
-        </header>
+    <main id="top">
+      <section class="shell hero" aria-labelledby="hero-title">
+        <div>
+          <p class="eyebrow">常驻菜单栏的 Claude Code 状态指示器</p>
+          <h1 id="hero-title">把 Claude Code 的工作状态变成一盏灯</h1>
+          <p class="lead">
+            Claude Traffic Light 通过 Claude Code hooks 监听会话事件，用红、黄、绿三种状态显示
+            AI 当前是否正在执行、已经完成，或需要你回到会话处理。
+          </p>
 
-        <div class="content">
-            <h2 style="text-align: center; margin-bottom: 40px; color: #667eea;">智能状态指示</h2>
+          <div class="install" aria-label="源码安装命令">
+            <code id="install-command">git clone https://github.com/TaylorSimery/claude-traffic-light.git</code>
+            <button class="copy" type="button" data-copy="#install-command">复制</button>
+          </div>
 
-            <div class="status-explanation">
-                <div class="status-card green">
-                    <h3>🟢 绿灯</h3>
-                    <p>Claude 已完成回复<br>可以继续对话</p>
-                </div>
-                <div class="status-card yellow">
-                    <h3>🟡 黄灯</h3>
-                    <p>Claude 正在思考<br>输出或处理中</p>
-                </div>
-                <div class="status-card red">
-                    <h3>🔴 红灯</h3>
-                    <p>会话中断<br>需要用户输入或网络问题</p>
-                </div>
-            </div>
+          <div class="actions" aria-label="主要操作">
+            <a class="button primary" href="https://github.com/TaylorSimery/claude-traffic-light/releases">下载最新版本</a>
+            <a class="button secondary" href="https://github.com/TaylorSimery/claude-traffic-light">查看源码</a>
+          </div>
 
-            <h2 style="text-align: center; margin: 60px 0 40px; color: #667eea;">功能特性</h2>
-
-            <div class="features">
-                <div class="feature">
-                    <div class="feature-icon">🎨</div>
-                    <h3>双模式显示</h3>
-                    <p>三灯模式（经典红绿灯）或单灯模式（极简风格），随心切换</p>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-icon">🌓</div>
-                    <h3>深色/浅色主题</h3>
-                    <p>自动适配系统外观，提供最佳视觉体验</p>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-icon">🔔</div>
-                    <h3>声音提示</h3>
-                    <p>状态切换时播放轻柔提示音，可一键静音</p>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-icon">📊</div>
-                    <h3>使用统计</h3>
-                    <p>记录每日红灯/绿灯次数和红灯总时长</p>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-icon">⚡</div>
-                    <h3>轻量高效</h3>
-                    <p>常驻菜单栏，资源占用极低</p>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-icon">🔧</div>
-                    <h3>自动配置</h3>
-                    <p>首次启动自动配置 Claude Code hooks</p>
-                </div>
-            </div>
-
-            <div class="download-section">
-                <h2 style="color: #667eea; margin-bottom: 20px;">立即下载</h2>
-                <p style="margin-bottom: 30px;">支持 macOS 和 Windows 平台</p>
-
-                <div class="download-buttons">
-                    <a href="https://github.com/TaylorSimery/claude-traffic-light/releases" class="btn btn-primary">
-                        📥 下载最新版本
-                    </a>
-                    <a href="https://github.com/TaylorSimery/claude-traffic-light" class="btn btn-secondary">
-                        💻 查看源码
-                    </a>
-                </div>
-            </div>
-
-            <h2 style="text-align: center; margin: 60px 0 30px; color: #667eea;">快速开始</h2>
-
-            <h3 style="margin: 30px 0 15px;">方式一：下载预编译版本</h3>
-            <ol style="margin-left: 20px; line-height: 2;">
-                <li>前往 <a href="https://github.com/TaylorSimery/claude-traffic-light/releases" style="color: #667eea;">Releases</a> 页面</li>
-                <li>下载最新的 <code>.dmg</code>（macOS）或 <code>.exe</code>（Windows）</li>
-                <li>安装并启动应用</li>
-            </ol>
-
-            <h3 style="margin: 30px 0 15px;">方式二：从源码构建</h3>
-            <div class="install-code">
-                <code># 克隆仓库<br>
-git clone https://github.com/TaylorSimery/claude-traffic-light.git<br>
-cd claude-traffic-light<br>
-<br>
-# 安装依赖<br>
-npm install<br>
-<br>
-# 开发模式运行<br>
-npm run dev<br>
-<br>
-# 打包 DMG（macOS）<br>
-npm run dist<br>
-<br>
-# 打包 NSIS（Windows）<br>
-npm run dist:win</code>
-            </div>
-
-            <h2 style="text-align: center; margin: 60px 0 30px; color: #667eea;">工作原理</h2>
-            <p style="text-align: center; max-width: 800px; margin: 0 auto;">
-                应用通过 Claude Code 的 hooks 系统监听关键事件：<br><br>
-                <strong>Start</strong> → 黄灯（Claude 开始输出）<br>
-                <strong>Stop</strong> → 绿灯（Claude 完成回复）<br>
-                <strong>AskUserQuestion</strong> → 红灯（需要用户选择）<br>
-                <strong>UserPromptSubmit</strong> → 黄灯（用户提交消息）<br><br>
-                首次启动时，应用会自动在 <code>~/.claude/settings.json</code> 中配置必要的 hooks。
-            </p>
-
-            <h2 style="text-align: center; margin: 60px 0 30px; color: #667eea;">系统要求</h2>
-            <div style="text-align: center;">
-                <p><strong>macOS:</strong> 10.13 或更高版本</p>
-                <p><strong>Windows:</strong> Windows 10 或更高版本</p>
-                <p><strong>Claude Code:</strong> 需要安装 Claude Code CLI 或桌面版</p>
-            </div>
+          <div class="meta" aria-label="兼容性">
+            <span>macOS / Windows</span>
+            <span>Electron + React</span>
+            <span>Claude Code hooks 自动配置</span>
+          </div>
         </div>
 
-        <footer>
-            <p>Made with ❤️ for Claude Code users</p>
-            <p style="margin-top: 10px;">
-                <a href="https://github.com/TaylorSimery/claude-traffic-light" style="color: white; text-decoration: none;">
-                    GitHub
-                </a>
-                 ·
-                <a href="https://github.com/TaylorSimery/claude-traffic-light/issues" style="color: white; text-decoration: none;">
-                    Report Issues
-                </a>
-            </p>
-            <p style="margin-top: 20px; opacity: 0.7;">MIT License © 2025</p>
-        </footer>
-    </div>
-</body>
+        <div class="visual" aria-label="Claude Traffic Light 使用预览">
+          <div class="console" aria-hidden="true">
+            <div class="console-body">
+              <span class="line"><span class="prompt">$</span> Claude Code starts a task</span>
+              <span class="line dim">hook: UserPromptSubmit -> yellow</span>
+              <span class="line dim">hook: Stop -> green</span>
+              <span class="line dim">hook: AskUserQuestion -> red</span>
+              <span class="line">&nbsp;</span>
+              <span class="line">{</span>
+              <span class="line">  <span class="json-key">"state"</span>: <span class="json-value">"green"</span>,</span>
+              <span class="line">  <span class="json-key">"surface"</span>: <span class="json-value">"menu bar"</span>,</span>
+              <span class="line">  <span class="json-key">"mode"</span>: <span class="json-value">"triple | single"</span>,</span>
+              <span class="line">  <span class="json-key">"stats"</span>: <span class="json-value">"weekly report"</span></span>
+              <span class="line">}</span>
+            </div>
+          </div>
+
+          <aside class="device-card" aria-label="核心流程">
+            <h2>菜单栏状态预览</h2>
+            <div class="traffic-body" aria-hidden="true">
+              <span class="traffic-dot red"></span>
+              <span class="traffic-dot yellow"></span>
+              <span class="traffic-dot green"></span>
+            </div>
+            <div class="flow">
+              <div class="flow-item">
+                <span class="flow-index">1</span>
+                <div>
+                  <p class="flow-title">会话开始</p>
+                  <p class="flow-copy">提交消息后立即进入黄灯，表示 Claude 正在处理。</p>
+                </div>
+              </div>
+              <div class="flow-item">
+                <span class="flow-index">2</span>
+                <div>
+                  <p class="flow-title">完成输出</p>
+                  <p class="flow-copy">收到 Stop 事件后切换绿灯，可以继续下一步。</p>
+                </div>
+              </div>
+              <div class="flow-item">
+                <span class="flow-index">3</span>
+                <div>
+                  <p class="flow-title">需要介入</p>
+                  <p class="flow-copy">遇到选择题或中断时变红，提醒你回到会话。</p>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="features" class="shell" aria-labelledby="features-title">
+        <div class="section-head">
+          <h2 id="features-title">为高频 AI 编程工作流设计</h2>
+          <p>它不是另一个聊天窗口，而是一个轻量、明确、始终可见的状态层。</p>
+        </div>
+        <div class="grid">
+          <article class="feature">
+            <span class="icon" aria-hidden="true">01</span>
+            <h3>实时状态指示</h3>
+            <p>监听 Claude Code 关键 hooks，把 Start、Stop、AskUserQuestion 等事件映射为清晰灯色。</p>
+          </article>
+          <article class="feature">
+            <span class="icon" aria-hidden="true">02</span>
+            <h3>常驻菜单栏</h3>
+            <p>窗口悬浮且不占任务栏，适合在 IDE、终端和浏览器之间频繁切换时保持可见。</p>
+          </article>
+          <article class="feature">
+            <span class="icon" aria-hidden="true">03</span>
+            <h3>单灯与三灯模式</h3>
+            <p>经典三灯适合快速扫视，单灯模式适合更克制的桌面风格。</p>
+          </article>
+          <article class="feature">
+            <span class="icon" aria-hidden="true">04</span>
+            <h3>自动写入 hooks</h3>
+            <p>首次启动会配置 Claude Code settings.json，并提供重新写入和手动配置入口。</p>
+          </article>
+          <article class="feature">
+            <span class="icon" aria-hidden="true">05</span>
+            <h3>主题与提示音</h3>
+            <p>支持深色、浅色外观和可静音的状态提示音，减少长时间使用的干扰。</p>
+          </article>
+          <article class="feature">
+            <span class="icon" aria-hidden="true">06</span>
+            <h3>使用统计</h3>
+            <p>记录红灯、绿灯次数和红灯持续时间，托盘菜单可查看本周使用概览。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="workflow" class="shell" aria-labelledby="workflow-title">
+        <div class="section-head">
+          <h2 id="workflow-title">三步启用</h2>
+          <p>从安装到可用保持简单，核心配置由应用在本机完成。</p>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <strong>下载应用</strong>
+            <p>从 GitHub Releases 下载最新 macOS DMG 或 Windows 安装包。</p>
+          </div>
+          <div class="step">
+            <strong>启动红绿灯</strong>
+            <p>应用会创建状态文件，并自动写入 Claude Code hooks 配置。</p>
+          </div>
+          <div class="step">
+            <strong>继续使用 Claude Code</strong>
+            <p>正常提交任务即可，菜单栏会同步显示当前工作状态。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="states" class="shell" aria-labelledby="states-title">
+        <div class="section-head">
+          <h2 id="states-title">三种状态，足够明确</h2>
+          <p>灯色只表达一件事：现在是否需要你关注 Claude Code。</p>
+        </div>
+        <div class="states">
+          <div class="state">
+            <strong><span class="state-marker green"></span>绿灯</strong>
+            <p>Claude 已完成回复，可以继续输入下一条指令或检查结果。</p>
+          </div>
+          <div class="state">
+            <strong><span class="state-marker yellow"></span>黄灯</strong>
+            <p>Claude 正在思考、调用工具或输出内容，当前无需切回会话。</p>
+          </div>
+          <div class="state">
+            <strong><span class="state-marker red"></span>红灯</strong>
+            <p>会话需要用户选择、输入或处理异常，应该回到 Claude Code 查看。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="commands" class="shell" aria-labelledby="commands-title">
+        <div class="section-head">
+          <h2 id="commands-title">源码构建</h2>
+          <p>需要从源码运行或自行打包时，可以使用下面这些命令。</p>
+        </div>
+        <div class="command-list">
+          <div class="command">
+            <span>克隆仓库</span>
+            <code>git clone https://github.com/TaylorSimery/claude-traffic-light.git</code>
+          </div>
+          <div class="command">
+            <span>安装依赖</span>
+            <code>npm install</code>
+          </div>
+          <div class="command">
+            <span>开发运行</span>
+            <code>npm run dev</code>
+          </div>
+          <div class="command">
+            <span>构建前端</span>
+            <code>npm run build</code>
+          </div>
+          <div class="command">
+            <span>打包 macOS</span>
+            <code>npm run dist</code>
+          </div>
+          <div class="command">
+            <span>打包 Windows</span>
+            <code>npm run dist:win</code>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="shell">
+        <span>Claude Traffic Light</span>
+        <a href="https://github.com/TaylorSimery/claude-traffic-light">MIT License on GitHub</a>
+      </div>
+    </footer>
+
+    <script>
+      const copyButton = document.querySelector("[data-copy]");
+      copyButton?.addEventListener("click", async () => {
+        const selector = copyButton.getAttribute("data-copy");
+        const target = selector ? document.querySelector(selector) : null;
+        const text = target?.textContent?.trim();
+        if (!text) return;
+
+        try {
+          await navigator.clipboard.writeText(text);
+          copyButton.textContent = "已复制";
+          window.setTimeout(() => {
+            copyButton.textContent = "复制";
+          }, 1400);
+        } catch {
+          copyButton.textContent = "复制失败";
+          window.setTimeout(() => {
+            copyButton.textContent = "复制";
+          }, 1400);
+        }
+      });
+    </script>
+  </body>
 </html>
